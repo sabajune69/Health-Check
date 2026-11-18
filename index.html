@@ -1,1 +1,69 @@
-<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#156d59"><meta name="apple-mobile-web-app-capable" content="yes"><title>My Health 2027</title><link rel="stylesheet" href="style.css"></head><body><aside><a class="brand" href="#today"><span>♥</span> My Health <small>2027</small></a><div class="personal">YOUR PERSONAL HEALTH SPACE</div><nav><button data-page="today">◫ &nbsp; Today</button><button data-page="foods">⌕ &nbsp; Food library</button><button data-page="progress">↗ &nbsp; Progress</button><button data-page="settings">⚙ &nbsp; My goals</button></nav><div class="side-bottom">Small steps.<br><b>Healthier every day.</b><p>Made for your Malaysian routine.</p><span class="pill">● Browser storage</span></div></aside><main><header><div><span class="eyebrow">MY HEALTH JOURNEY</span><h1 id="pageTitle">A little better, every day.</h1><p id="subtitle">Your food, movement and progress. All in one place.</p></div><div><div class="avatar">♡</div><span id="accountName" class="tiny"></span><br><button type="button" class="text" onclick="chooseUser()">Switch user</button></div></header><div id="view"></div><footer>Personal tracking, not a diagnosis. Food calories are estimates; portions, oil and recipes matter.<br>Records stay in this browser. No automatic Apple Health or Notion sync.</footer></main><dialog id="modal"><div id="modalBody"></div><button class="close" aria-label="Close dialog" onclick="modal.close()">×</button></dialog><div id="toast" role="status"></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#156d59" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <title>My Health 2027</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22 fill=%22%23156d59%22%3E♥%3C/text%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <aside>
+      <a class="brand" href="#today"
+        ><span>♥</span> My Health <small>2027</small></a
+      >
+      <div class="personal">YOUR PERSONAL HEALTH SPACE</div>
+      <nav>
+        <button data-page="today">◫ &nbsp; Today</button
+        ><button data-page="foods">⌕ &nbsp; Food library</button
+        ><button data-page="progress">↗ &nbsp; Progress</button
+        ><button data-page="settings">⚙ &nbsp; My goals</button>
+      </nav>
+      <div class="side-bottom">
+        Small steps.<br /><b>Healthier every day.</b>
+        <p>Made for your Malaysian routine.</p>
+        <span class="pill">● Browser storage</span>
+      </div>
+    </aside>
+    <main>
+      <header>
+        <div>
+          <span class="eyebrow">MY HEALTH JOURNEY</span>
+          <h1 id="pageTitle">A little better, every day.</h1>
+          <p id="subtitle">
+            Your food, movement and progress. All in one place.
+          </p>
+        </div>
+        <div>
+          <div class="avatar">♡</div>
+          <span id="accountName" class="tiny"></span><br /><button
+            type="button"
+            class="text"
+            onclick="chooseUser()"
+          >
+            Switch user
+          </button>
+        </div>
+      </header>
+      <div id="view"></div>
+      <footer>
+        Personal tracking, not a diagnosis. Food calories are estimates;
+        portions, oil and recipes matter.<br />Records stay in this browser. No
+        automatic Apple Health or Notion sync.
+      </footer>
+    </main>
+    <dialog id="modal">
+      <div id="modalBody"></div>
+      <button class="close" aria-label="Close dialog" onclick="modal.close()">
+        ×
+      </button>
+    </dialog>
+    <div id="toast" role="status"></div>
+    <script src="app.js"></script>
+  </body>
+</html>
