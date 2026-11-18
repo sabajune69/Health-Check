@@ -819,3 +819,75 @@ button.danger {
       var(--banner-image, url("./family-header.jpg")) 75% 38% / cover;
   }
 }
+
+/* Profile pictures */
+.avatar {
+  overflow: hidden;
+  flex: none;
+  color: var(--green);
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-sm {
+  width: 30px;
+  height: 30px;
+  font-size: 13px;
+}
+.avatar-md {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+.avatar-lg {
+  width: 84px;
+  height: 84px;
+  font-size: 32px;
+}
+.profile-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.member-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.profile-photo {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 8px 0 18px;
+}
+.profile-photo p {
+  margin: 8px 0 0;
+}
+#nameForm {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  margin-bottom: 14px;
+}
+#nameForm label {
+  flex: 1;
+  margin: 0;
+}
+#nameForm button[type="submit"] {
+  width: auto;
+  margin-top: 0;
+  flex: none;
+}
+/* Phones hide the small header avatar for space, but keep profile pictures
+   in Edit profile, the family cards and the profile list. */
+@media (max-width: 700px) {
+  .avatar.avatar-sm,
+  .avatar.avatar-md,
+  .avatar.avatar-lg {
+    display: grid;
+  }
+}

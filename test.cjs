@@ -98,6 +98,28 @@ if ($('#familyOverview').innerHTML.includes('onclick="openUser')) throw Error('I
 `,
   c,
 );
+// Edit profile: name and picture
+vm.runInContext(
+  `
+openUser('sarah');
+if (renameUser('   ') !== false || identity.name !== 'Sarah') throw Error('Blank name accepted');
+if (!renameUser('  Sarah Aminah  ') || identity.name !== 'Sarah Aminah') throw Error('Rename');
+if (getUsers().find(u => u.id === 'sarah').name !== 'Sarah Aminah') throw Error('Rename not saved');
+if (!$('#accountName').textContent.includes('Sarah Aminah')) throw Error('Header name not updated');
+renameUser('<img src=x onerror=alert(1)>');
+if (avatarHTML(identity).includes('<img src=x') || !avatarHTML(identity).includes('&lt;')) throw Error('Avatar initial not escaped');
+renameUser('Sarah Aminah');
+const pic = 'data:image/jpeg;base64,' + 'A'.repeat(200);
+if (setPhoto('sarah', 'javascript:alert(1)') !== false) throw Error('Bad picture accepted');
+if (!setPhoto('sarah', pic) || getPhoto('sarah') !== pic) throw Error('Picture save');
+if (!avatarHTML({id:'sarah',name:'S'}).includes('<img src="' + pic)) throw Error('Picture not shown');
+setPhoto('sarah', null);
+if (getPhoto('sarah') !== null || !avatarHTML({id:'sarah',name:'Sarah'}).includes('>S<')) throw Error('Picture remove');
+setPhoto('sarah', pic); promptAnswer = 'sarah'; deleteProfile();
+if (localStorage.getItem(photoKey('sarah')) !== null) throw Error('Picture left after delete');
+`,
+  c,
+);
 console.log(
-  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving and profile deletion",
+  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename and profile pictures",
 );
