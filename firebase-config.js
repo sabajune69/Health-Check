@@ -3,11 +3,11 @@
 // are not secrets. Access is protected by Google sign-in and firestore.rules.
 // Set to null to run in browser-only mode.
 
-// Family cloud on/off switch. It was on hold (KIV) on 18 Nov 2026 after
-// Google sign-in problems on phones, and switched back on for a trial with
-// the repaired sign-in guidance. Set to false to put it on hold again; the
-// Firebase project, family group and rules are kept either way.
-window.CLOUD_SYNC_ON = true;
+// Firebase family cloud: ON HOLD (KIV). Replaced on 18 Nov 2026 by the
+// family Drive sync (drive-sync.js), which needs no Google sign-in on family
+// phones. The Firebase project, family group and rules are kept; set to true
+// (and DRIVE_SYNC_URL to "") to switch back.
+window.CLOUD_SYNC_ON = false;
 
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBA7nRXz3iVzscw5WOHUSliVd-j327FgLU",
