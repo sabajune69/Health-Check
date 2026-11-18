@@ -81,9 +81,9 @@ There are two ways, depending on who should see the new photo:
 
 ## Family cloud: sign in, sync and keep data safe
 
-> **On hold (KIV) since 18 Nov 2026.** Google sign-in failed for several family members on their phones, so the cloud is switched off. The app runs in browser-only mode until it is switched back on. Everything is kept: the Firebase project `my-health-family`, the family group and the security rules. To switch it back on, set `window.CLOUD_SYNC_ON = true` in `firebase-config.js` and raise the `?v=` version in `index.html`.
+> **Trial restart (18 Nov 2026).** Google sign-in failed for several family members on their phones, so the cloud was put on hold (KIV), repaired, and switched back on for a trial. To put it on hold again, set `window.CLOUD_SYNC_ON = false` in `firebase-config.js` and raise the `?v=` version in `index.html`. The Firebase project `my-health-family`, the family group and the rules are kept either way.
 >
-> **Repairs made before pausing:**
+> **Sign-in repairs:**
 > - Pages opened inside WhatsApp, Instagram, Facebook, LINE, WeChat, TikTok or other apps now show **“Open in your browser to sign in”** with a **Copy link** button. Google refuses sign-in inside those apps.
 > - The iPhone home-screen app explains that sign-in should be done in Safari.
 > - Every sign-in error now says what to do and shows its error code.
