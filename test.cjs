@@ -152,6 +152,21 @@ if (!$('#modalBody').innerHTML.includes('value="Roti canai"')) throw Error('Entr
 `,
   c,
 );
+// Tea break meal
+vm.runInContext(
+  `
+if (meals.join('|') !== 'Breakfast|Lunch|Tea break|Dinner|Supper / snacks') throw Error('Meal order');
+$('#newName').value = 'Tea'; $('#newId').value = 'teatime'; $('#newUser').onsubmit({ preventDefault() {} });
+state.profile = {height:160,baseline:60,goal:58,calories:1700,steps:5000,walking:20}; save();
+page = 'today'; render();
+if (!$('#view').innerHTML.includes('☕</span>Tea break')) throw Error('Tea break section missing');
+entryForm(searchFoods('kuih bakar')[0], 'Tea break');
+if (!$('#modalBody').innerHTML.includes('<option selected>Tea break</option>') && !/<option[^>]*selected[^>]*>Tea break/.test($('#modalBody').innerHTML)) throw Error('Tea break not preselected');
+const tb = normalizeBackup({version:1,profile:state.profile,days:{'2026-11-18':{entries:[{id:'t1',name:'Kuih bakar',portion:'1 potong',meal:'Tea break',kcal:150,qty:1}],reports:{'Tea break':'karipap'}}}});
+if (!tb || tb.days['2026-11-18'].entries[0].meal !== 'Tea break' || tb.days['2026-11-18'].reports['Tea break'] !== 'karipap') throw Error('Tea break backup');
+`,
+  c,
+);
 console.log(
-  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures and the food library",
+  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures, the food library and tea break",
 );
