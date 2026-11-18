@@ -575,10 +575,12 @@ a {
     linear-gradient(
       90deg,
       rgba(21, 70, 57, 0.94) 0%,
-      rgba(21, 70, 57, 0.78) 40%,
-      rgba(21, 70, 57, 0.08) 100%
+      rgba(21, 70, 57, 0.82) 30%,
+      rgba(21, 70, 57, 0.3) 44%,
+      rgba(21, 70, 57, 0.06) 70%,
+      rgba(21, 70, 57, 0) 100%
     ),
-    var(--banner-image, url("./family-header.jpg")) center 38% / cover;
+    var(--banner-image, url("./family-header.jpg")) center 42% / cover;
   color: white;
   box-shadow: 0 12px 30px #1d47311c;
 }
@@ -800,5 +802,20 @@ button.danger {
   .banner-actions {
     right: 12px;
     bottom: 10px;
+  }
+}
+
+/* On phones the headline spans the whole banner, so use a stronger tint
+   and keep the photo's people (on its right side) in view. */
+@media (max-width: 700px) {
+  .family-banner {
+    background:
+      linear-gradient(
+        90deg,
+        rgba(21, 70, 57, 0.9) 0%,
+        rgba(21, 70, 57, 0.7) 60%,
+        rgba(21, 70, 57, 0.35) 100%
+      ),
+      var(--banner-image, url("./family-header.jpg")) 75% 38% / cover;
   }
 }
