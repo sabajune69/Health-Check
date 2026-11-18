@@ -14,7 +14,7 @@ It runs entirely in the web browser. There is no account to sign up for, no serv
 |---|---|
 | **Family page** | See each member's check-ins, walking minutes, latest steps, latest weight and BMI for the last 7 or 30 days, with family charts and earned milestones. |
 | **Today** | Log food by meal (breakfast, lunch, dinner, supper/snacks), record steps, walking minutes, weight, coffee, milk and whether you had vegetables at dinner. |
-| **Food library** | ~35 common Malaysian foods and drinks with calories per serving. Items marked *MOH reference* come from the Ministry of Health Malaysia; the rest are editable starter estimates. Add your own from a food label. |
+| **Food library** | 820 Malaysian foods and drinks from the *Bank Kalori Makanan* table, shown as a sortable list: serving, weight, kcal, kcal per 100 g and source. Filter by category, search in Malay or English, and add any row to your diary. Add your own from a food label. |
 | **Progress** | Your last 7 days of logged calories, full weight history with BMI, activity history and every day you recorded. |
 | **My goals** | Edit your display name and profile picture. Set height, starting weight, goal weight, daily calories, daily steps and walking-session length. Export or restore a backup, or delete the profile. |
 
@@ -40,6 +40,22 @@ The app never fills in gaps. A blank day means "not reported", not zero.
 To switch person, press **Switch user** at the top right.
 
 **On iPhone:** open the site in Safari → Share → **Add to Home Screen** for an app-like icon. Apple Health readings need to be typed in manually.
+
+---
+
+## Food library
+
+The library comes from the **Bank Kalori Makanan** calorie table (`bank_kalori_makanan.pdf`), grouped into its sections: rice & noodles, chicken & meat, fish & seafood, vegetables, fruit, beans & nuts, kuih & desserts, Western food, drinks, jams & spreads, others and vegetarian. An extra **Tambahan** group holds add-ons such as sugar, condensed milk and creamer.
+
+- **Search** in Malay or English: *chicken rice* finds *Nasi ayam*, *mee* finds *Mi*, *kuey teow* finds *Kuetiau*, and accents are ignored.
+- **Sort** by best match, name, lowest or highest kcal, or lowest kcal per 100 g (useful for comparing foods of different sizes).
+- **Sources** are shown on each row: NP = Nutritionist Pro v2.1.13, NC = Nutrient Composition of Malaysian Foods (4th ed., 1997), Atlas = Atlas Makanan (2009). Rows marked **Estimate** are a few everyday foods the table does not cover (e.g. roti telur, onigiri, banana).
+- **Drinks are complete:** where the table lists a drink as a 0 kcal base plus add-ons, the library shows the total. For example, *Teh tarik* is 103 kcal including its condensed and evaporated milk.
+- The **serving guide** (under *Sources and serving guide*) explains Malay serving words such as *senduk*, *mangkuk* and *sudu teh*.
+
+Values are averages. Recipes, oil and portion size change the real number, so match the serving and adjust the number of servings.
+
+**Updating the list:** edit `foods.js` directly (one food per line), or regenerate it from a new copy of the PDF with `python3 tools/build_foods.py bank_kalori_makanan.pdf foods.js` (needs `pip install pdfplumber`).
 
 ---
 
@@ -89,7 +105,7 @@ A restore replaces only the profile you're signed into; other profiles are untou
 
 ## Publishing with GitHub Pages
 
-1. Make sure these files are in the repository root: `index.html`, `app.js`, `style.css`, `family-header.jpg`, `.nojekyll`.
+1. Make sure these files are in the repository root: `index.html`, `foods.js`, `app.js`, `style.css`, `family-header.jpg`, `.nojekyll`.
 2. In the repository, go to **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`.
 3. Share the Pages URL with the family. No build step is needed.
 
@@ -100,6 +116,8 @@ A restore replaces only the profile you're signed into; other profiles are untou
 | File | Purpose |
 |---|---|
 | `index.html` | Page shell: sidebar, header, dialog and footer. |
+| `foods.js` | Food library data (generated from the calorie table). |
+| `tools/build_foods.py` | Rebuilds `foods.js` from the PDF. |
 | `app.js` | All app logic: profiles, diary, family overview, charts, goals, backups and header photo. Plain JavaScript, no libraries. |
 | `style.css` | Layout and styling, including mobile layout under 700 px. |
 | `family-header.jpg` | Default header photo. |
