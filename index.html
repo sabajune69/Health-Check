@@ -2,15 +2,23 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width,initial-scale=1,viewport-fit=cover"
+    />
     <meta name="theme-color" content="#156d59" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="My Health" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <link rel="manifest" href="manifest.webmanifest" />
     <title>My Health 2027</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%22.9em%22 font-size=%2290%22 fill=%22%23156d59%22%3E♥%3C/text%3E%3C/svg%3E"
     />
-    <link rel="stylesheet" href="style.css?v=2026.11.19.2" />
+    <link rel="stylesheet" href="style.css?v=2026.11.19.3" />
   </head>
   <body>
     <aside>
@@ -19,10 +27,17 @@
       >
       <div class="personal">YOUR PERSONAL HEALTH SPACE</div>
       <nav>
-        <button data-page="today">◫ &nbsp; Today</button
-        ><button data-page="foods">⌕ &nbsp; Food library</button
-        ><button data-page="progress">↗ &nbsp; Progress</button
-        ><button data-page="settings">⚙ &nbsp; My goals</button>
+        <button data-page="today">
+          <span class="ni" aria-hidden="true">◫</span><span>Today</span></button
+        ><button data-page="foods">
+          <span class="ni" aria-hidden="true">⌕</span
+          ><span>Food library</span></button
+        ><button data-page="progress">
+          <span class="ni" aria-hidden="true">↗</span
+          ><span>Progress</span></button
+        ><button data-page="settings">
+          <span class="ni" aria-hidden="true">⚙</span><span>My goals</span>
+        </button>
       </nav>
       <div class="side-bottom">
         Small steps.<br /><b>Healthier every day.</b>
@@ -53,8 +68,9 @@
       <div id="view"></div>
       <footer>
         Personal tracking, not a diagnosis. Food calories are estimates;
-        portions, oil and recipes matter.<br />Records stay in this browser. No
-        automatic Apple Health or Notion sync.
+        portions, oil and recipes matter.<br />Records are kept on this device
+        and, once connected, in the family’s Google Drive. No automatic Apple
+        Health sync.
       </footer>
     </main>
     <dialog id="modal">
@@ -64,11 +80,11 @@
       </button>
     </dialog>
     <div id="toast" role="status"></div>
-    <script src="foods.js?v=2026.11.19.2"></script>
-    <script src="app.js?v=2026.11.19.2"></script>
-    <script src="firebase-config.js?v=2026.11.19.2"></script>
-    <script type="module" src="cloud.js?v=2026.11.19.2"></script>
-    <script src="drive-config.js?v=2026.11.19.2"></script>
-    <script src="drive-sync.js?v=2026.11.19.2"></script>
+    <script src="foods.js?v=2026.11.19.3"></script>
+    <script src="app.js?v=2026.11.19.3"></script>
+    <script src="firebase-config.js?v=2026.11.19.3"></script>
+    <script type="module" src="cloud.js?v=2026.11.19.3"></script>
+    <script src="drive-config.js?v=2026.11.19.3"></script>
+    <script src="drive-sync.js?v=2026.11.19.3"></script>
   </body>
 </html>

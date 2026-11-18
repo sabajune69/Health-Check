@@ -1158,3 +1158,174 @@ button.small {
 .cloud-cta > div {
   flex: 1;
 }
+
+/* ===== Phone-friendly layout ===== */
+nav .ni {
+  display: inline-block;
+  width: 1.4em;
+  margin-right: 6px;
+}
+button,
+a,
+summary {
+  touch-action: manipulation; /* no double-tap zoom delay */
+  -webkit-tap-highlight-color: transparent;
+}
+/* Touch screens: 16px text in boxes stops iPhone zooming in on tap. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+@media (max-width: 700px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  /* Bottom menu: icon above label, clear of the iPhone home bar */
+  aside {
+    height: auto;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(8px);
+    box-shadow: 0 -4px 18px #0000000d;
+  }
+  nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 7px 2px;
+    min-height: 52px;
+    font-size: 11px;
+    line-height: 1.15;
+    border-radius: 12px;
+  }
+  nav .ni {
+    width: auto;
+    margin: 0;
+    font-size: 20px;
+    line-height: 1;
+  }
+  main {
+    padding: max(16px, env(safe-area-inset-top)) 14px
+      calc(96px + env(safe-area-inset-bottom));
+  }
+  /* Header: account row on top, then the page title */
+  header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    margin-bottom: 16px;
+  }
+  header > div:last-child {
+    order: -1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 6px;
+  }
+  header > div:last-child br {
+    display: none;
+  }
+  header .avatar {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+  #accountName {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  header > div:last-child button.text {
+    padding: 8px 10px;
+    min-height: 40px;
+  }
+  h1 {
+    font-size: 23px;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+  }
+  header p {
+    font-size: 13px;
+  }
+  /* Bigger tap targets */
+  button.text {
+    min-height: 40px;
+    padding: 8px 10px;
+  }
+  .entry {
+    margin-left: 0;
+    align-items: center;
+    font-size: 13px;
+  }
+  .entry button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+    font-size: 17px;
+  }
+  button.small {
+    min-height: 40px;
+    padding: 8px 12px;
+  }
+  .chip {
+    padding: 10px 14px;
+  }
+  /* Pop-up forms slide up from the bottom like a phone app */
+  dialog {
+    width: 100%;
+    max-width: 100%;
+    margin: auto 0 0;
+    border-radius: 22px 22px 0 0;
+    border-bottom: 0;
+    max-height: 92dvh;
+    overflow-y: auto;
+    padding: 22px 16px calc(22px + env(safe-area-inset-bottom));
+    overscroll-behavior: contain;
+  }
+  dialog[open] {
+    animation: sheet-up 0.22s ease-out;
+  }
+  .close {
+    width: 44px;
+    height: 44px;
+    right: 6px;
+    top: 6px;
+    font-size: 26px;
+  }
+  dialog form button[type="submit"] {
+    min-height: 48px;
+  }
+  #toast {
+    bottom: calc(86px + env(safe-area-inset-bottom));
+    max-width: calc(100vw - 32px);
+  }
+  footer {
+    font-size: 11px;
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog[open] {
+    animation: none;
+  }
+}
