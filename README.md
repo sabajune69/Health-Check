@@ -13,7 +13,7 @@ It runs entirely in the web browser. There is no account to sign up for, no serv
 | Area | What you can do |
 |---|---|
 | **Family page** | See each member's check-ins, walking minutes, latest steps, latest weight and BMI for the last 7 or 30 days, with family charts and earned milestones. |
-| **Today** | Log food by meal (breakfast, lunch, dinner, supper/snacks), record steps, walking minutes, weight, coffee, milk and whether you had vegetables at dinner. |
+| **Today** | Log food by meal (breakfast, lunch, tea break, dinner, supper/snacks), record steps, walking minutes, weight, coffee, milk and whether you had vegetables at dinner. |
 | **Food library** | 820 Malaysian foods and drinks from the *Bank Kalori Makanan* table, shown as a sortable list: serving, weight, kcal, kcal per 100 g and source. Filter by category, search in Malay or English, and add any row to your diary. Add your own from a food label. |
 | **Progress** | Your last 7 days of logged calories, full weight history with BMI, activity history and every day you recorded. |
 | **My goals** | Edit your display name and profile picture. Set height, starting weight, goal weight, daily calories, daily steps and walking-session length. Export or restore a backup, or delete the profile. |

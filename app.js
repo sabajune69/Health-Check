@@ -1,5 +1,25 @@
 // Food data (foods, FOOD_CATEGORIES, FOOD_SOURCES) is loaded from foods.js.
-const meals = ["Breakfast", "Lunch", "Dinner", "Supper / snacks"];
+const meals = ["Breakfast", "Lunch", "Tea break", "Dinner", "Supper / snacks"];
+const mealIcons = {
+  Breakfast: "☀",
+  Lunch: "◒",
+  "Tea break": "☕",
+  Dinner: "☾",
+  "Supper / snacks": "✦",
+};
+// The meal that fits the current time, used as the default when adding food.
+function mealNow() {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  return h < 10.5
+    ? "Breakfast"
+    : h < 15
+      ? "Lunch"
+      : h < 18
+        ? "Tea break"
+        : h < 21.5
+          ? "Dinner"
+          : "Supper / snacks";
+}
 const foodCats = Object.fromEntries(
   FOOD_CATEGORIES.map(([id, ms, en]) => [id, { ms, en }]),
 );
@@ -564,7 +584,7 @@ function renderToday() {
     `<div class="toolbar"><input aria-label="Log date" type="date" id="date" value="${date}" max="${today()}"><div><button class="secondary" onclick="activity()">＋ Activity & weight</button> <button onclick="foodDialog()">＋ Log food</button></div></div><div class="stats"><section class="card calcard"><div class="ring" style="--pct:${Math.min(100, (t / p.calories) * 100)}%"><div class="ring-inner"><span class="big">${number(t)}</span><span class="unit">kcal logged</span></div></div><div><h3>Daily nourishment</h3><div class="metric"><b>${number(Math.max(0, p.calories - t))}</b> <span class="unit">kcal to target</span></div><span class="tiny">${number(p.calories)} kcal daily target<br>${t > p.calories ? number(t - p.calories) + " kcal above target" : "Estimates from logged portions"}<br>Missing meals are not zero intake.</span></div></section><section class="card"><h3>♡ &nbsp; Body mass index</h3><div class="big">${b.toFixed(1)}</div><div class="tiny">${w ? "Latest recorded weight" : "Using starting baseline"} · ${weight} kg<br>${p.height} cm height</div><div class="mini-line"><span style="width:${Math.min(100, (b / 40) * 100)}%"></span></div><div class="tiny">BMI is a screening measure.</div></section><section class="card"><h3>⚑ &nbsp; Weight journey</h3><div class="big">${weight}<span class="unit"> kg</span></div><p class="tiny">Goal ${p.goal} kg · ${goalText(weight, p)}</p><button class="text" onclick="activity()">Record a weigh-in →</button></section></div><div class="columns"><section class="card"><div class="section-head"><h2>Your food diary</h2><span class="pill">${d.entries.length} items logged</span></div>${meals
       .map((m, i) => {
         let es = d.entries.filter((e) => e.meal === m);
-        return `<div class="meal"><div class="meal-top"><div class="meal-title"><span class="meal-icon">${["☀", "◒", "☾", "☕"][i]}</span>${m}</div><button class="text" onclick="foodDialog('${m}')">＋ Add</button></div>${es.map((e) => `<div class="entry"><span>${esc(e.name)}<br><span class="tiny">${e.qty} × ${esc(e.portion)}</span></span><span>${number(e.kcal * e.qty)} kcal <button class="text" aria-label="Edit food" onclick="editEntry('${e.id}')">✎</button><button class="text" aria-label="Delete food" onclick="deleteEntry('${e.id}')">×</button></span></div>`).join("")}${d.reports?.[m] ? `<p><b>Reported:</b> ${esc(d.reports[m])}<br>Calories not assigned to this report. Add measured portions above to estimate.</p>` : !es.length ? "<p>Not reported yet</p>" : ""}</div>`;
+        return `<div class="meal"><div class="meal-top"><div class="meal-title"><span class="meal-icon">${mealIcons[m] || "•"}</span>${m}</div><button class="text" onclick="foodDialog('${m}')">＋ Add</button></div>${es.map((e) => `<div class="entry"><span>${esc(e.name)}<br><span class="tiny">${e.qty} × ${esc(e.portion)}</span></span><span>${number(e.kcal * e.qty)} kcal <button class="text" aria-label="Edit food" onclick="editEntry('${e.id}')">✎</button><button class="text" aria-label="Delete food" onclick="deleteEntry('${e.id}')">×</button></span></div>`).join("")}${d.reports?.[m] ? `<p><b>Reported:</b> ${esc(d.reports[m])}<br>Calories not assigned to this report. Add measured portions above to estimate.</p>` : !es.length ? "<p>Not reported yet</p>" : ""}</div>`;
       })
       .join(
         "",
@@ -647,7 +667,7 @@ function show(html) {
   $("#modalBody").innerHTML = html;
   if (!$("#modal").open) $("#modal").showModal();
 }
-function foodDialog(meal = "Breakfast") {
+function foodDialog(meal = mealNow()) {
   show(
     `<h2>Log your food</h2><p class="tiny">For ${esc(date)} · Choose a food, then adjust your portion.</p><label>Search Malaysian foods<input id="foodSearch" placeholder="Try nasi lemak, teh tarik or chicken"></label><div id="pickList" style="max-height:320px;overflow:auto"></div><button class="secondary" onclick="customFood('${meal}')">Custom food / label</button>`,
   );
@@ -670,14 +690,14 @@ function foodDialog(meal = "Breakfast") {
   $("#foodSearch").oninput = (e) => list(e.target.value);
   list("");
 }
-function customFood(meal = "Breakfast") {
+function customFood(meal = mealNow()) {
   entryForm(-1, meal);
 }
 function editEntry(id) {
   const e = day().entries.find((x) => x.id === id);
   entryForm(-1, e.meal, e);
 }
-function entryForm(index, meal = "Breakfast", entry = null) {
+function entryForm(index, meal = mealNow(), entry = null) {
   const food = index >= 0 ? foods[index] : null;
   const f = food ? [food.n, portionText(food), food.k] : ["", "1 serving", 0];
   show(
