@@ -79,31 +79,42 @@ There are two ways, depending on who should see the new photo:
 
 ---
 
-## Family cloud: sign in, sync and keep data safe
+## Family Drive: one place for the whole family’s data
 
-> **Trial restart (18 Nov 2026).** Google sign-in failed for several family members on their phones, so the cloud was put on hold (KIV), repaired, and switched back on for a trial. To put it on hold again, set `window.CLOUD_SYNC_ON = false` in `firebase-config.js` and raise the `?v=` version in `index.html`. The Firebase project `my-health-family`, the family group and the rules are kept either way.
->
-> **Sign-in repairs:**
-> - Pages opened inside WhatsApp, Instagram, Facebook, LINE, WeChat, TikTok or other apps now show **“Open in your browser to sign in”** with a **Copy link** button. Google refuses sign-in inside those apps.
-> - The iPhone home-screen app explains that sign-in should be done in Safari.
-> - Every sign-in error now says what to do and shows its error code.
+Every profile and diary, from every connected phone or computer, is saved to **one Google Sheet in the family admin’s Google Drive**. Family members don’t need a Google account or a sign-in. Each device is connected once with the **family passcode**.
 
-Without signing in, records are saved only in the browser where they were entered. Each browser and phone keeps its own copy, and clearing browser data erases it.
+**Connect a device:** open the site in Chrome or Safari, type the family passcode in **Connect this device to the family** on the family page, and press **Connect**. If the device already has profiles, the app offers to save them to the family Drive. A profile with the same user ID as an existing family profile is treated as the same person, and its diary is combined day by day.
 
-**Sign in with Google** (family page) to save everything in your family’s private cloud (Google Firebase):
+**How syncing works**
+- Changes are saved to the Sheet a second or two after they’re made. Other devices pick them up every 30 seconds, when the app is reopened, or with **Sync now**.
+- The app keeps working offline. Changes wait on the device (**Offline · will sync**) and are sent when it reconnects.
+- If the same day is edited on two devices, the most recent edit wins.
+- The sidebar shows **Saved to family Drive**, **Saving to family Drive…**, **Offline · will sync** or **This device only**.
 
-1. **First person:** press **Sign in with Google** → **Create family group**. Any profiles already on that browser are offered for upload.
-2. **Everyone else:** press **Sign in with Google**, type the **family code** shown on the first person’s family page (e.g. `ABCD-2345`) and press **Join family**.
-3. Profiles, pictures, diaries and the header photo now appear on every signed-in phone and computer, and changes show up on the others within a second or two.
+**For the admin**
+- The Sheet **My Health Family – data** has three tabs:
+  - **profiles:** one row per person
+  - **days:** one row per person per day, with readable weight, steps, walking, calories and foods, plus the full record
+  - **header:** the family header photo, split into parts
+- Google Sheets keeps version history (**File → Version history**).
+- The passcode is kept only in the Apps Script’s **Script Properties** (key `PASSCODE`), never in this public repository.
+- **To change the passcode:** edit `PASSCODE` in the script’s Script Properties. Each device then asks for the new passcode once.
+- After 20 wrong passcodes in 10 minutes, all devices are locked out for 10 minutes.
+- **Security:** anyone who has the passcode can read and change the family’s records. Choose one that isn’t used anywhere else, and change it if it leaks. Each connected device keeps the passcode in its browser, so use **Disconnect** on shared or borrowed devices.
+- **Disconnect** can also remove the family’s records from that device. It refuses while changes haven’t reached the Drive yet.
 
-- **Who can see the data:** only signed-in members of your family group. The database rules (`firestore.rules`) block everyone else, including people who know the website address. Children don’t need their own login; their profiles live in the family group.
-- **Offline:** the app keeps working without signal. Changes wait on the device (“Offline · will sync”) and upload when it reconnects.
-- **Two edits to the same day:** the most recent edit wins.
-- **Sign out** on a shared or borrowed device and choose to remove the family’s records from that browser. They stay safe in the cloud.
-- **New family code:** the family owner can make a new code if the old one was shared too widely.
-- The status at the bottom of the sidebar shows **Synced to family cloud**, **Saving to cloud…**, **Offline · will sync** or **Browser storage only**.
+**Setup (already done for this family):**
+1. Create a Google Sheet, then **Extensions → Apps Script**.
+2. Paste `apps-script/Code.gs` and save.
+3. In **Project Settings → Script Properties**, add `PASSCODE`.
+4. **Deploy → New deployment → Web app**, with *Execute as: Me* and *Who has access: Anyone*, and authorise it.
+5. Put the `/exec` web address in `drive-config.js`.
 
-The cloud runs on Firebase’s free Spark plan (no payment card). The free plan has no automatic backups, so an occasional **Export backup** is still a good extra copy.
+The script only has access to its own Sheet (`@OnlyCurrentDoc`), not the rest of your Drive.
+
+### Google sign-in (Firebase): on hold
+
+An earlier version synced through Firebase with Google sign-in. Several family members couldn’t sign in on their phones (Google blocks sign-in in WhatsApp’s and other apps’ built-in browsers), so it is **on hold (KIV)**: `window.CLOUD_SYNC_ON = false` in `firebase-config.js`. The project `my-health-family`, `cloud.js` and `firestore.rules` are kept. To switch back, set it to `true` and set `DRIVE_SYNC_URL` to `""`.
 
 ### Moving to another phone or a new site address
 1. On the old device: **My goals → Export backup** (downloads a `.json` file).
@@ -124,7 +135,7 @@ A restore replaces only the profile you're signed into; other profiles are untou
 
 ## Publishing with GitHub Pages
 
-1. Make sure these files are in the repository root: `index.html`, `foods.js`, `app.js`, `cloud.js`, `firebase-config.js`, `vendor/`, `style.css`, `family-header.jpg`, `.nojekyll`.
+1. Make sure these files are in the repository root: `index.html`, `foods.js`, `app.js`, `drive-sync.js`, `drive-config.js`, `cloud.js`, `firebase-config.js`, `vendor/`, `style.css`, `family-header.jpg`, `.nojekyll`.
 2. In the repository, go to **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`.
 3. Share the Pages URL with the family. No build step is needed.
 
@@ -137,7 +148,10 @@ A restore replaces only the profile you're signed into; other profiles are untou
 | `index.html` | Page shell: sidebar, header, dialog and footer. |
 | `foods.js` | Food library data (generated from the calorie table). |
 | `tools/build_foods.py` | Rebuilds `foods.js` from the PDF. |
-| `cloud.js` | Family cloud: Google sign-in and two-way sync with Firestore. |
+| `drive-sync.js` | Family Drive sync: passcode connection and two-way sync with the family Google Sheet. |
+| `drive-config.js` | Web address of the family's Apps Script (not a secret). |
+| `apps-script/Code.gs` | The Google Apps Script that saves to the family Sheet. |
+| `cloud.js` | Firebase Google sign-in sync (on hold). |
 | `firebase-config.js` | Firebase project settings (public identifiers, not secrets). Set to `null` for browser-only mode. |
 | `firestore.rules` | Database security rules; paste into Firebase console → Firestore → Rules → Publish after changing. |
 | `vendor/firebase-13.4.0.js` | Firebase SDK bundled locally (app, auth, firestore). |
@@ -152,7 +166,7 @@ Run the tests:
 node test.cjs
 ```
 
-**Releasing a change:** in `index.html`, raise the `?v=` number on `style.css`, `foods.js`, `app.js`, `firebase-config.js` and `cloud.js` (keep them all the same; `node test.cjs` checks this). Browsers then load the new files together instead of mixing new and cached copies.
+**Releasing a change:** in `index.html`, raise the `?v=` number on `style.css`, `foods.js`, `app.js`, `firebase-config.js`, `cloud.js`, `drive-config.js` and `drive-sync.js` (keep them all the same; `node test.cjs` checks this). Browsers then load the new files together instead of mixing new and cached copies.
 
 Browser storage keys: `my-health-family-users-v1` (profile list), `my-health-family-data-<id>` (one per profile), `my-health-family-photo-<id>` (profile picture) and `my-health-family-header-v1` (custom header photo).
 

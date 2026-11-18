@@ -186,13 +186,11 @@ if (state !== null || !/Choose a profile/.test($('#toast').textContent)) throw E
   const html = fs.readFileSync("index.html", "utf8");
   const v = [
     ...html.matchAll(
-      /(?:style\.css|foods\.js|app\.js|firebase-config\.js|cloud\.js)\?v=([\w.-]+)/g,
+      /(?:style\.css|foods\.js|app\.js|firebase-config\.js|cloud\.js|drive-config\.js|drive-sync\.js)\?v=([\w.-]+)/g,
     ),
   ].map((m) => m[1]);
-  if (v.length !== 5 || new Set(v).size !== 1)
-    throw Error(
-      "index.html: style.css, foods.js, app.js, firebase-config.js and cloud.js need the same ?v= version",
-    );
+  if (v.length !== 7 || new Set(v).size !== 1)
+    throw Error("index.html: every CSS/JS file needs the same ?v= version");
 }
 console.log(
   "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures, the food library, tea break and sidebar without a profile",

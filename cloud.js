@@ -145,10 +145,13 @@ function updatePill() {
   );
 }
 addEventListener("online", () => {
+  if (phase === "off") return; // on hold or not set up: stay completely inactive
   updatePill();
   scheduleFlush(0);
 });
-addEventListener("offline", updatePill);
+addEventListener("offline", () => {
+  if (phase !== "off") updatePill();
+});
 
 // ---------- family box on the family page ----------
 let boxEl = null;
