@@ -181,15 +181,17 @@ if (state !== null || !/Choose a profile/.test($('#toast').textContent)) throw E
 `,
   c,
 );
-// Release stamp: style.css, foods.js and app.js must share one ?v= value
+// Release stamp: every local CSS/JS file in index.html must share one ?v= value
 {
   const html = fs.readFileSync("index.html", "utf8");
   const v = [
-    ...html.matchAll(/(?:style\.css|foods\.js|app\.js)\?v=([\w.-]+)/g),
+    ...html.matchAll(
+      /(?:style\.css|foods\.js|app\.js|firebase-config\.js|cloud\.js)\?v=([\w.-]+)/g,
+    ),
   ].map((m) => m[1]);
-  if (v.length !== 3 || new Set(v).size !== 1)
+  if (v.length !== 5 || new Set(v).size !== 1)
     throw Error(
-      "index.html: style.css, foods.js and app.js need the same ?v= version",
+      "index.html: style.css, foods.js, app.js, firebase-config.js and cloud.js need the same ?v= version",
     );
 }
 console.log(
