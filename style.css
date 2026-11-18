@@ -1030,3 +1030,12 @@ button.small {
   display: inline;
   margin: 0;
 }
+
+.guest-note {
+  margin-bottom: 14px;
+}
+.guest-note button.text {
+  padding: 0;
+  font-weight: 700;
+  text-decoration: underline;
+}

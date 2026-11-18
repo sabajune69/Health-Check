@@ -147,7 +147,8 @@ if (searchFoods('', 'drink').some(i => !foods[i].c.includes('drink'))) throw Err
 const lowFirst = sortedFoods('', 'fruit', 'low').map(i => foods[i].k);
 if (lowFirst.some((k, i) => i && k < lowFirst[i - 1])) throw Error('Sort by kcal');
 if (!find('Chicken boxing').length || find('Chicken boxing').length !== 1) throw Error('Duplicates not merged');
-openUser('sarah'); entryForm(searchFoods('roti canai')[0]);
+$('#newName').value = 'Foodie'; $('#newId').value = 'foodie'; $('#newUser').onsubmit({ preventDefault() {} });
+entryForm(searchFoods('roti canai')[0]);
 if (!$('#modalBody').innerHTML.includes('value="Roti canai"')) throw Error('Entry form prefill');
 `,
   c,
@@ -167,6 +168,19 @@ if (!tb || tb.days['2026-11-18'].entries[0].meal !== 'Tea break' || tb.days['202
 `,
   c,
 );
+// Sidebar before a profile is open: never a silent no-op
+vm.runInContext(
+  `
+chooseUser(); toastText = '';
+navigate('today');
+if (state !== null || !/profile first/.test($('#toast').textContent)) throw Error('Today without profile gave no message');
+navigate('foods');
+if (!$('#view').innerHTML.includes('Browsing only') || !$('#foodResults').innerHTML.includes('Add')) throw Error('Food library not browsable without profile');
+entryForm(0);
+if (state !== null || !/Choose a profile/.test($('#toast').textContent)) throw Error('Add without profile not guarded');
+`,
+  c,
+);
 console.log(
-  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures, the food library and tea break",
+  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures, the food library, tea break and sidebar without a profile",
 );

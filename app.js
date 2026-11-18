@@ -373,6 +373,9 @@ function chooseUser() {
   key = null;
   $("#accountName").textContent = "Choose a user";
   $(".avatar").textContent = "♡";
+  document
+    .querySelectorAll("nav button")
+    .forEach((b) => b.classList.remove("active"));
   $("#pageTitle").textContent = "A healthier family, one day at a time.";
   $("#subtitle").textContent =
     "Create your own user ID. No ChatGPT account required.";
@@ -537,7 +540,9 @@ function updateDay(values) {
   render();
 }
 function navigate(p) {
-  if (!state) return;
+  // Before a profile is open, the food library can still be browsed; the
+  // other pages need a profile, so say so instead of silently doing nothing.
+  if (!state) return p === "foods" ? browseFoods() : needProfile();
   page = p;
   render();
   window.scrollTo(0, 0);
@@ -545,6 +550,24 @@ function navigate(p) {
 document
   .querySelectorAll("nav button")
   .forEach((b) => (b.onclick = () => navigate(b.dataset.page)));
+function needProfile(message = "Choose or create a profile first") {
+  if (!$("#newUser")) chooseUser();
+  toast(message);
+  const target = $("#userList button") || $("#newName");
+  target?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  if (target?.id === "newName") target.focus?.({ preventScroll: true });
+}
+function browseFoods() {
+  page = "foods";
+  document
+    .querySelectorAll("nav button")
+    .forEach((b) => b.classList.toggle("active", b.dataset.page === "foods"));
+  $("#pageTitle").textContent = "Your Malaysian food library.";
+  $("#subtitle").textContent =
+    `${foods.length} Malaysian foods and drinks. Open a profile to log them.`;
+  renderFoods();
+  window.scrollTo(0, 0);
+}
 function latestWeight() {
   return Object.entries(state.days)
     .filter(([d, v]) => d <= date && v.weight != null)
@@ -600,6 +623,9 @@ function renderFoods() {
   const chip = (id, label) =>
     `<button type="button" class="chip ${libCat === id ? "selected" : ""}" data-cat="${id}">${esc(label)} <span>${counts[id] || 0}</span></button>`;
   $("#view").innerHTML =
+    (state
+      ? ""
+      : `<div class="note guest-note">Browsing only. <button type="button" class="text" onclick="chooseUser()">Choose or create a profile</button> to add foods to a diary.</div>`) +
     `<div class="toolbar food-toolbar"><input class="search" id="search" type="search" placeholder="Search nasi lemak, teh tarik, chicken, kuih…" aria-label="Search foods" value="${esc(libQuery)}"><select id="foodSort" aria-label="Sort foods"><option value="relevance">Sort: best match</option><option value="name">Name A–Z</option><option value="low">Lowest kcal</option><option value="high">Highest kcal</option><option value="density">Lowest kcal per 100 g</option></select><button onclick="customFood()">＋ Custom food</button></div>` +
     `<div class="chips" role="group" aria-label="Food categories">${chip("all", "All foods")}${FOOD_CATEGORIES.map(([id, ms, en]) => chip(id, ms === en ? ms : `${ms} · ${en}`)).join("")}</div>` +
     `<div class="note food-note">Calories per serving from the <b>Bank Kalori Makanan</b> table. Values are averages: recipes, oil and portion sizes vary, so match the serving and adjust the number of servings. Foods marked <b>Estimate</b> are not in the table. <details><summary>Sources and serving guide</summary><p><b>Sources:</b> ${Object.entries(
@@ -668,6 +694,7 @@ function show(html) {
   if (!$("#modal").open) $("#modal").showModal();
 }
 function foodDialog(meal = mealNow()) {
+  if (!state) return needProfile("Choose a profile to log food and activity");
   show(
     `<h2>Log your food</h2><p class="tiny">For ${esc(date)} · Choose a food, then adjust your portion.</p><label>Search Malaysian foods<input id="foodSearch" placeholder="Try nasi lemak, teh tarik or chicken"></label><div id="pickList" style="max-height:320px;overflow:auto"></div><button class="secondary" onclick="customFood('${meal}')">Custom food / label</button>`,
   );
@@ -691,6 +718,7 @@ function foodDialog(meal = mealNow()) {
   list("");
 }
 function customFood(meal = mealNow()) {
+  if (!state) return needProfile("Choose a profile to log food and activity");
   entryForm(-1, meal);
 }
 function editEntry(id) {
@@ -698,6 +726,7 @@ function editEntry(id) {
   entryForm(-1, e.meal, e);
 }
 function entryForm(index, meal = mealNow(), entry = null) {
+  if (!state) return needProfile("Choose a profile to log food and activity");
   const food = index >= 0 ? foods[index] : null;
   const f = food ? [food.n, portionText(food), food.k] : ["", "1 serving", 0];
   show(
@@ -735,6 +764,7 @@ function deleteEntry(id) {
   }
 }
 function activity() {
+  if (!state) return needProfile("Choose a profile to log food and activity");
   const d = day();
   show(
     `<h2>Actual activity & habits</h2><p class="tiny">${date} · Leave unreported values blank. Blank is different from zero.</p><form id="activityForm"><div class="row">${[
