@@ -129,6 +129,8 @@ Run the tests:
 node test.cjs
 ```
 
+**Releasing a change:** in `index.html`, raise the `?v=` number on `style.css`, `foods.js` and `app.js` (keep all three the same; `node test.cjs` checks this). Browsers then load the new files together instead of mixing new and cached copies.
+
 Browser storage keys: `my-health-family-users-v1` (profile list), `my-health-family-data-<id>` (one per profile), `my-health-family-photo-<id>` (profile picture) and `my-health-family-header-v1` (custom header photo).
 
 ### Not included
