@@ -16,7 +16,7 @@ It runs entirely in the web browser. There is no account to sign up for, no serv
 | **Today** | Log food by meal (breakfast, lunch, dinner, supper/snacks), record steps, walking minutes, weight, coffee, milk and whether you had vegetables at dinner. |
 | **Food library** | ~35 common Malaysian foods and drinks with calories per serving. Items marked *MOH reference* come from the Ministry of Health Malaysia; the rest are editable starter estimates. Add your own from a food label. |
 | **Progress** | Your last 7 days of logged calories, full weight history with BMI, activity history and every day you recorded. |
-| **My goals** | Set height, starting weight, goal weight, daily calories, daily steps and walking-session length. Export or restore a backup, or delete the profile. |
+| **My goals** | Edit your display name and profile picture. Set height, starting weight, goal weight, daily calories, daily steps and walking-session length. Export or restore a backup, or delete the profile. |
 
 ### Milestones on the family page
 - **Logged 3 days in period** — any real check-in on at least 3 days.
@@ -40,6 +40,17 @@ The app never fills in gaps. A blank day means "not reported", not zero.
 To switch person, press **Switch user** at the top right.
 
 **On iPhone:** open the site in Safari → Share → **Add to Home Screen** for an app-like icon. Apple Health readings need to be typed in manually.
+
+---
+
+## Editing your profile
+
+Open **My goals → Edit profile**:
+- **Display name** — type a new name and press **Save name**. It updates the top bar, the family page and the profile list.
+- **Profile picture** — press **📷 Change picture** and choose a photo. It is cropped to a centred square and shown on the family page, the profile list and the top bar. **Remove picture** goes back to your initial.
+- The **user ID** can't be changed, because your records are saved under it.
+
+Pictures are kept on this browser only and are included in your backup file, so restoring a backup on a new phone brings your picture back.
 
 ---
 
@@ -100,7 +111,7 @@ Run the tests:
 node test.cjs
 ```
 
-Browser storage keys: `my-health-family-users-v1` (profile list), `my-health-family-data-<id>` (one per profile) and `my-health-family-header-v1` (custom header photo).
+Browser storage keys: `my-health-family-users-v1` (profile list), `my-health-family-data-<id>` (one per profile), `my-health-family-photo-<id>` (profile picture) and `my-health-family-header-v1` (custom header photo).
 
 ### Not included
 - No automatic sync with Apple Health, Google Fit or Notion.

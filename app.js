@@ -100,6 +100,33 @@ function goalText(weight, p) {
 const usersKey = "my-health-family-users-v1";
 const dataKey = (id) => "my-health-family-data-" + id;
 const headerKey = "my-health-family-header-v1";
+const photoKey = (id) => "my-health-family-photo-" + id;
+const validImage = (s) =>
+  typeof s === "string" &&
+  s.length < 500000 &&
+  /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(s);
+function getPhoto(id) {
+  try {
+    const p = localStorage.getItem(photoKey(id));
+    return validImage(p) ? p : null;
+  } catch {
+    return null;
+  }
+}
+// Round profile picture, or the first letter of the name when there is none.
+function avatarHTML(user, cls = "") {
+  const photo = getPhoto(user.id);
+  return photo
+    ? `<span class="avatar ${cls}"><img src="${photo}" alt=""></span>`
+    : `<span class="avatar ${cls}">${esc(Array.from(user.name || "?")[0].toUpperCase())}</span>`;
+}
+function showAccount(user) {
+  $("#accountName").textContent = user.name + " · @" + user.id;
+  const photo = getPhoto(user.id);
+  $(".avatar").innerHTML = photo
+    ? `<img src="${photo}" alt="">`
+    : esc(Array.from(user.name || "?")[0].toUpperCase());
+}
 function getUsers() {
   const users = JSON.parse(localStorage.getItem(usersKey) || "[]");
   if (!Array.isArray(users)) throw Error("Invalid profile list");
@@ -178,7 +205,7 @@ function familyOverview(users, period = 7) {
           .map((b) => `<span class="achievement">★ ${esc(b)}</span>`)
           .join("")
       : '<span class="tiny">No milestone earned yet. Log actual progress to get started.</span>';
-    return `<article class="card family-member"><div class="section-head"><div><h2>${esc(user.name)}</h2><span class="tiny">@${esc(user.id)}</span></div><button class="secondary" data-open-user="${esc(user.id)}">Open diary</button></div><div class="family-metrics"><div><span class="tiny">Latest actual weight</span><b>${recentWeight ? esc(recentWeight[1].weight) + " kg" : "Not logged"}</b>${bmiValue ? `<span class="tiny">BMI ${bmiValue}</span>` : ""}${recentWeight && Number(p.baseline) > 0 && Number(p.goal) > 0 && Number(p.baseline) !== Number(p.goal) ? `<div class="goal-track"><span style="width:${Math.max(0, Math.min(100, ((Number(p.baseline) - recentWeight[1].weight) / (Number(p.baseline) - Number(p.goal))) * 100))}%"></span></div><span class="tiny">Weight goal ${esc(p.goal)} kg</span>` : ""}</div><div><span class="tiny">Walking in period</span><b>${weekWalk} min</b><span class="tiny">${walkDays.length} goal sessions</span></div><div><span class="tiny">Most recent steps</span><b>${steps ? number(steps[1].steps) : "Not logged"}</b><span class="tiny">${steps ? esc(steps[0]) : ""}</span></div><div><span class="tiny">Check-ins in period</span><b>${activeDays.length} / ${period} days</b></div></div><div class="achievements"><strong>Achievements</strong><div>${badgesHTML}</div></div></article>`;
+    return `<article class="card family-member"><div class="section-head"><div class="member-head">${avatarHTML(user, "avatar-md")}<div><h2>${esc(user.name)}</h2><span class="tiny">@${esc(user.id)}</span></div></div><button class="secondary" data-open-user="${esc(user.id)}">Open diary</button></div><div class="family-metrics"><div><span class="tiny">Latest actual weight</span><b>${recentWeight ? esc(recentWeight[1].weight) + " kg" : "Not logged"}</b>${bmiValue ? `<span class="tiny">BMI ${bmiValue}</span>` : ""}${recentWeight && Number(p.baseline) > 0 && Number(p.goal) > 0 && Number(p.baseline) !== Number(p.goal) ? `<div class="goal-track"><span style="width:${Math.max(0, Math.min(100, ((Number(p.baseline) - recentWeight[1].weight) / (Number(p.baseline) - Number(p.goal))) * 100))}%"></span></div><span class="tiny">Weight goal ${esc(p.goal)} kg</span>` : ""}</div><div><span class="tiny">Walking in period</span><b>${weekWalk} min</b><span class="tiny">${walkDays.length} goal sessions</span></div><div><span class="tiny">Most recent steps</span><b>${steps ? number(steps[1].steps) : "Not logged"}</b><span class="tiny">${steps ? esc(steps[0]) : ""}</span></div><div><span class="tiny">Check-ins in period</span><b>${activeDays.length} / ${period} days</b></div></div><div class="achievements"><strong>Achievements</strong><div>${badgesHTML}</div></div></article>`;
   });
   $("#familyOverview").innerHTML =
     `<div class="section-head"><div><h2>Family progress</h2><p class="tiny">Actual records and milestones for the last ${period} days · This browser only</p></div><span class="pill">${users.length} ${users.length === 1 ? "profile" : "profiles"}</span></div><div class="chart-controls"><span>View period</span><button class="${period === 7 ? "selected" : ""}" onclick="familyOverview(getUsers(),7)">7 days</button><button class="${period === 30 ? "selected" : ""}" onclick="familyOverview(getUsers(),30)">30 days</button></div>${familyCharts(users, week)}<div class="family-grid">${cards.join("")}</div>`;
@@ -267,7 +294,7 @@ function chooseUser() {
     for (const user of users) {
       const button = document.createElement("button");
       button.className = "secondary profile-choice";
-      button.textContent = user.name + " · @" + user.id;
+      button.innerHTML = `${avatarHTML(user, "avatar-sm")}<span>${esc(user.name)} · @${esc(user.id)}</span>`;
       button.onclick = () => openUser(user.id);
       $("#userList").appendChild(button);
     }
@@ -367,8 +394,7 @@ function openUser(id) {
     state = data;
     date = today();
     page = "today";
-    $("#accountName").textContent = user.name + " · @" + user.id;
-    $(".avatar").textContent = user.name.slice(0, 1).toUpperCase();
+    showAccount(user);
     render();
   } catch {
     alert(
@@ -621,7 +647,7 @@ function renderProgress() {
 function renderSettings() {
   const p = state.profile;
   $("#view").innerHTML =
-    `<div class="settings"><section class="card" style="margin-bottom:20px"><h2>Your account</h2><p><b>${esc(identity.name)}</b><br>@${esc(identity.id)}</p><label>Individual user ID<input readonly value="${esc(identity.id)}"></label><p class="tiny">This is a local user ID, not a secure login. Profiles have separate meals, activity, weight and goals. Anyone with access to this browser can switch profiles. Records do not sync between devices.</p><button type="button" class="secondary" onclick="chooseUser()">Switch user →</button></section><section class="card"><h2>Your personal targets</h2><p class="tiny">Enter your own height, starting weight and targets. New accounts start with an empty diary. Targets are editable and are not a personalised prescription.</p><form id="profileForm"><div class="row">${profileFields
+    `<div class="settings"><section class="card" style="margin-bottom:20px"><h2>Edit profile</h2><div class="profile-photo">${avatarHTML(identity, "avatar-lg")}<div><button type="button" class="secondary" id="changePhoto">📷 Change picture</button> ${getPhoto(identity.id) ? '<button type="button" class="text" id="removePhoto">Remove picture</button>' : ""}<input type="file" id="photoFile" accept="image/*" hidden><p class="tiny">Square pictures look best. Photos are cropped to the centre and saved on this browser only.</p></div></div><form id="nameForm"><label>Display name<input id="displayName" required maxlength="60" autocomplete="name" value="${esc(identity.name)}"></label><button type="submit">Save name</button></form><label>User ID (cannot be changed)<input readonly value="@${esc(identity.id)}"></label><p class="tiny">This is a local user ID, not a secure login. Profiles have separate meals, activity, weight and goals. Anyone with access to this browser can switch profiles. Records do not sync between devices.</p><button type="button" class="secondary" onclick="chooseUser()">Switch user →</button></section><section class="card"><h2>Your personal targets</h2><p class="tiny">Enter your own height, starting weight and targets. New accounts start with an empty diary. Targets are editable and are not a personalised prescription.</p><form id="profileForm"><div class="row">${profileFields
       .map(
         ([id, l, min, max, step]) =>
           `<label>${l}<input required id="p_${id}" type="number" min="${min}" max="${max}" step="${step}" value="${p[id] ?? ""}"></label>`,
@@ -638,6 +664,94 @@ function renderSettings() {
   };
   $("#import").onchange = importData;
   $("#deleteProfile").onclick = deleteProfile;
+  $("#nameForm").onsubmit = (e) => {
+    e.preventDefault();
+    if (renameUser($("#displayName").value)) toast("Name updated");
+  };
+  $("#changePhoto").onclick = () => $("#photoFile").click();
+  $("#photoFile").onchange = changePhoto;
+  if ($("#removePhoto"))
+    $("#removePhoto").onclick = () => {
+      if (!confirm("Remove your profile picture?")) return;
+      setPhoto(identity.id, null);
+      toast("Picture removed");
+    };
+}
+function renameUser(value) {
+  const name = String(value ?? "")
+    .trim()
+    .slice(0, 60);
+  if (!name) {
+    alert("Please enter a name.");
+    return false;
+  }
+  try {
+    const users = getUsers().map((u) =>
+      u.id === identity.id ? { ...u, name } : u,
+    );
+    localStorage.setItem(usersKey, JSON.stringify(users));
+  } catch {
+    alert("Unable to save the new name. Nothing was changed.");
+    return false;
+  }
+  identity = { ...identity, name };
+  showAccount(identity);
+  render();
+  return true;
+}
+function setPhoto(id, dataUrl) {
+  try {
+    if (dataUrl == null) localStorage.removeItem(photoKey(id));
+    else if (validImage(dataUrl)) localStorage.setItem(photoKey(id), dataUrl);
+    else return false;
+  } catch {
+    alert(
+      "This picture is too large to save in the browser. Try a smaller one.",
+    );
+    return false;
+  }
+  if (identity?.id === id) {
+    showAccount(identity);
+    render();
+  }
+  return true;
+}
+// Crops the chosen image to a centred square and shrinks it to 320 px.
+function changePhoto(e) {
+  const f = e.target.files[0];
+  e.target.value = "";
+  if (!f) return;
+  if (!/^image\//.test(f.type)) {
+    alert("Please choose a photo (JPEG, PNG or similar).");
+    return;
+  }
+  const url = URL.createObjectURL(f);
+  const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(url);
+    const side = Math.min(img.naturalWidth, img.naturalHeight);
+    const out = Math.min(320, side);
+    const c = document.createElement("canvas");
+    c.width = c.height = out;
+    c.getContext("2d").drawImage(
+      img,
+      (img.naturalWidth - side) / 2,
+      (img.naturalHeight - side) / 2,
+      side,
+      side,
+      0,
+      0,
+      out,
+      out,
+    );
+    if (setPhoto(identity.id, c.toDataURL("image/jpeg", 0.85)))
+      toast("Picture updated");
+  };
+  img.onerror = () => {
+    URL.revokeObjectURL(url);
+    alert("Unable to read this image. Try a JPEG or PNG photo.");
+  };
+  img.src = url;
 }
 function deleteProfile() {
   const typed = prompt(
@@ -654,6 +768,7 @@ function deleteProfile() {
       JSON.stringify(getUsers().filter((u) => u.id !== identity.id)),
     );
     localStorage.removeItem(dataKey(identity.id));
+    localStorage.removeItem(photoKey(identity.id));
   } catch {
     alert("Unable to delete this profile. No records were changed.");
     return;
@@ -667,7 +782,12 @@ function exportData() {
     new Blob(
       [
         JSON.stringify(
-          { ...state, localUserId: identity.id, displayName: identity.name },
+          {
+            ...state,
+            localUserId: identity.id,
+            displayName: identity.name,
+            ...(getPhoto(identity.id) ? { photo: getPhoto(identity.id) } : {}),
+          },
           null,
           2,
         ),
@@ -769,6 +889,7 @@ async function importData(e) {
       return;
     state = clean;
     save();
+    if (validImage(x.photo)) setPhoto(identity.id, x.photo);
     render();
     toast("Backup restored");
   } catch {
