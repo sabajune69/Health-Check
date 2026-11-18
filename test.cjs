@@ -44,7 +44,12 @@ const c = {
   prompt: () => c.promptAnswer,
 };
 vm.createContext(c);
-vm.runInContext(fs.readFileSync("app.js", "utf8"), c);
+vm.runInContext(
+  fs.readFileSync("foods.js", "utf8") +
+    "\n" +
+    fs.readFileSync("app.js", "utf8"),
+  c,
+);
 vm.runInContext(
   `
 $('#newName').value='Saba';$('#newId').value='Saba';$('#newUser').onsubmit({preventDefault(){}});
@@ -120,6 +125,33 @@ if (localStorage.getItem(photoKey('sarah')) !== null) throw Error('Picture left 
 `,
   c,
 );
+// Food library (Bank Kalori Makanan)
+vm.runInContext(
+  `
+if (foods.length < 800) throw Error('Food list too short: ' + foods.length);
+const catIds = FOOD_CATEGORIES.map(c => c[0]);
+for (const f of foods) {
+  if (!f.n || !f.s || !Number.isFinite(f.k) || f.k < 0 || !FOOD_SOURCES[f.src] || !f.c.length || !f.c.every(c => catIds.includes(c)) || (f.g != null && !(f.g > 0)))
+    throw Error('Bad food row: ' + JSON.stringify(f));
+}
+const find = (q) => searchFoods(q).map(i => foods[i]);
+const tt = find('teh tarik')[0];
+if (tt.n !== 'Teh tarik' || tt.k !== 103) throw Error('Teh tarik should total 103 kcal, got ' + tt.k);
+if (find('Air barli')[0].k !== 105) throw Error('Air barli total');
+if (!find('chicken rice')[0].n.startsWith('Nasi ayam')) throw Error('chicken rice should list Nasi ayam first, got ' + find('chicken rice')[0].n);
+if (find('mee goreng')[0].n !== 'Mi goreng') throw Error('mee goreng should list Mi goreng first, got ' + find('mee goreng')[0].n);
+if (!find('nescafé').some(f => f.n.startsWith('Nescafe'))) throw Error('Accent-insensitive search');
+if (find('roti canai')[0].n !== 'Roti canai' || find('roti c')[0].n !== 'Roti canai') throw Error('Name match ranks first');
+if (find('fried rice')[0].n !== 'Nasi goreng') throw Error('fried rice -> Nasi goreng first, got ' + find('fried rice')[0].n);
+if (searchFoods('', 'drink').some(i => !foods[i].c.includes('drink'))) throw Error('Category filter');
+const lowFirst = sortedFoods('', 'fruit', 'low').map(i => foods[i].k);
+if (lowFirst.some((k, i) => i && k < lowFirst[i - 1])) throw Error('Sort by kcal');
+if (!find('Chicken boxing').length || find('Chicken boxing').length !== 1) throw Error('Duplicates not merged');
+openUser('sarah'); entryForm(searchFoods('roti canai')[0]);
+if (!$('#modalBody').innerHTML.includes('value="Roti canai"')) throw Error('Entry form prefill');
+`,
+  c,
+);
 console.log(
-  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename and profile pictures",
+  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures and the food library",
 );

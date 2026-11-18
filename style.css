@@ -891,3 +891,142 @@ button.danger {
     display: grid;
   }
 }
+/* Food library: list table */
+.food-toolbar {
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.food-toolbar .search {
+  flex: 1 1 280px;
+  max-width: none;
+  margin: 0;
+}
+.food-toolbar select {
+  width: auto;
+  flex: 0 0 auto;
+}
+.chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0 10px;
+  scrollbar-width: thin;
+}
+.chip {
+  flex: none;
+  background: #f1f4ef;
+  color: var(--ink);
+  padding: 7px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.chip span {
+  color: var(--muted);
+  margin-left: 3px;
+}
+.chip.selected {
+  background: var(--green);
+  color: white;
+}
+.chip.selected span {
+  color: #cfe5dc;
+}
+.food-note {
+  margin: 6px 0 4px;
+}
+.food-note details {
+  margin-top: 8px;
+}
+.food-note summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--green);
+}
+.food-note details p {
+  margin: 8px 0 0;
+}
+.table-card {
+  padding: 4px 18px 10px;
+  overflow-x: auto;
+}
+.food-table {
+  margin-top: 0;
+}
+.food-table thead th {
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 1;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.food-table td {
+  vertical-align: top;
+  font-size: 13px;
+}
+.food-table td .tiny {
+  margin-top: 2px;
+}
+.food-table tbody tr:hover {
+  background: #f8faf6;
+}
+.food-table .num {
+  text-align: right;
+  white-space: nowrap;
+}
+.food-table td:last-child {
+  text-align: right;
+  width: 1%;
+}
+button.small {
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.src {
+  font-size: 10px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #edf4ed;
+  color: var(--green);
+  cursor: help;
+}
+.src-Est {
+  background: #fff4e5;
+  color: #9a5b16;
+}
+.m-only {
+  display: none;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+@media (max-width: 700px) {
+  .d-only {
+    display: none;
+  }
+  .m-only {
+    display: block;
+  }
+  .table-card {
+    padding: 0 10px 6px;
+  }
+  .food-toolbar select,
+  .food-toolbar button {
+    flex: 1 1 auto;
+  }
+}
+.food-note b {
+  display: inline;
+  margin: 0;
+}

@@ -1,44 +1,124 @@
-const MOH =
-  "https://www.moh.gov.my/moh/resources/Penerbitan/CPG/Endocrine/CPG_T2DM_6th_Edition_2020_13042021.pdf";
-const foods = [
-  ["Nasi lemak", "1 small packet · 200 g", 338, "MOH"],
-  ["Roti canai", "1 piece · 95 g", 301, "MOH"],
-  ["Nasi goreng", "1 plate · 200 g", 386, "MOH"],
-  ["Nasi putih", "1 bowl · 159 g", 207, "MOH"],
-  ["Mee / bihun goreng", "1 plate · 200 g", 346, "MOH"],
-  ["Mee kari", "1 bowl · 450 g", 549, "MOH"],
-  ["Chapati", "1 piece · 100 g", 300, "MOH"],
-  ["Bread", "1 slice · 30 g", 70, "MOH"],
-  ["Roti bawang", "1 piece, no curry", 340, "Estimate"],
-  ["Roti telur / tampal", "1 piece, no curry", 390, "Estimate"],
-  ["Half-boiled egg", "1 egg", 75, "Estimate"],
-  ["Telur goreng", "1 egg", 110, "Estimate"],
-  ["Nasi ayam", "1 plate", 600, "Estimate"],
-  ["Nasi ayam penyet", "1 plate", 700, "Estimate"],
-  ["Char kuey teow", "1 plate", 600, "Estimate"],
-  ["Nasi briyani ayam", "1 plate", 750, "Estimate"],
-  ["Laksa", "1 bowl", 450, "Estimate"],
-  ["Satay ayam", "1 stick, no sauce", 35, "Estimate"],
-  ["Teh tarik", "1 cup · 250 ml", 150, "Estimate"],
-  ["Teh C kurang manis", "1 cup · milk and sugar included", 70, "Estimate"],
-  ["Nescafé O kosong", "1 cup, no milk or sugar", 2, "Estimate"],
-  ["Condensed milk / susu pekat", "1 teaspoon · about 7 g", 22, "Estimate"],
-  ["Fresh low-fat milk", "100 ml", 45, "Estimate"],
-  ["Sugar / gula", "1 teaspoon · 4 g", 16, "Estimate"],
-  ["Milo powder", "2 level teaspoons · about 10 g", 40, "Estimate"],
-  ["Nestum cereal", "8 level teaspoons · about 24 g", 90, "Estimate"],
-  ["Plain yogurt", "1 cup · 125 g", 80, "Estimate"],
-  ["Pineapple yogurt", "1 cup · 125 g", 120, "Estimate"],
-  ["Onigiri", "1 piece", 180, "Estimate"],
-  ["Banana / pisang", "1 medium", 105, "Estimate"],
-  ["Apple / epal", "1 medium", 95, "Estimate"],
-  ["Salad, no dressing", "1 small bowl", 30, "Estimate"],
-  ["Cooked vegetables", "1 small bowl, some oil", 80, "Estimate"],
-  ["Ikan bakar", "1 portion · 120 g", 180, "Estimate"],
-  ["Chicken breast", "100 g cooked", 165, "Estimate"],
-  ["Chocolate kunafa", "1 small piece · about 40 g", 180, "Estimate"],
-];
+// Food data (foods, FOOD_CATEGORIES, FOOD_SOURCES) is loaded from foods.js.
 const meals = ["Breakfast", "Lunch", "Dinner", "Supper / snacks"];
+const foodCats = Object.fromEntries(
+  FOOD_CATEGORIES.map(([id, ms, en]) => [id, { ms, en }]),
+);
+const portionText = (f) => (f.g ? `${f.s} · ${f.g} g` : f.s);
+const per100g = (f) => (f.g ? Math.round((f.k / f.g) * 100) : null);
+const norm = (s) =>
+  String(s ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+// English / spelling variants → the Malay words used in the table.
+const foodSynonyms = {
+  mee: "mi",
+  noodle: "mi",
+  noodles: "mi",
+  kuey: "kuetiau",
+  kway: "kuetiau",
+  teow: "kuetiau",
+  koay: "kuetiau",
+  chicken: "ayam",
+  beef: "daging",
+  meat: "daging",
+  mutton: "kambing",
+  fish: "ikan",
+  prawn: "udang",
+  prawns: "udang",
+  shrimp: "udang",
+  squid: "sotong",
+  crab: "ketam",
+  egg: "telur",
+  eggs: "telur",
+  rice: "nasi",
+  fried: "goreng",
+  bread: "roti",
+  tea: "teh",
+  coffee: "kopi",
+  milk: "susu",
+  sugar: "gula",
+  soup: "sup",
+  vegetable: "sayur",
+  vegetables: "sayur",
+  veg: "sayur",
+  porridge: "bubur",
+  banana: "pisang",
+  apple: "epal",
+  potato: "kentang",
+  cake: "kek",
+  biscuit: "biskut",
+  biscuits: "biskut",
+  water: "air",
+  juice: "jus",
+  tofu: "tauhu",
+  beans: "kacang",
+  nuts: "kacang",
+  curry: "kari",
+  satay: "sate",
+  chapati: "capati",
+  spaghetti: "spageti",
+  fruit: "buah",
+  drink: "minuman",
+  drinks: "minuman",
+  snack: "snek",
+  dessert: "pencuci",
+};
+// Common English dish names, whose word order differs from Malay.
+const foodPhrases = {
+  "chicken rice": "nasi ayam",
+  "fried rice": "nasi goreng",
+  "coconut rice": "nasi lemak",
+  "white rice": "nasi putih",
+  "fried noodles": "mi goreng",
+  "fried noodle": "mi goreng",
+  "fried chicken": "ayam goreng",
+  "fried fish": "ikan goreng",
+  "grilled fish": "ikan bakar",
+  "fried egg": "telur goreng",
+  "boiled egg": "telur rebus",
+  "chicken curry": "kari ayam",
+  "curry chicken": "kari ayam",
+  "chicken soup": "sup ayam",
+  "chicken porridge": "bubur ayam",
+  "pulled tea": "teh tarik",
+  "milk tea": "teh tarik",
+};
+const foodIndex = foods.map((f) => norm([f.n, f.s, f.note].join(" ")));
+// A typed word matches when it appears in the text, or when its Malay
+// synonym appears there as a whole word (so "mee" finds "Mi goreng").
+const wordIn = (text, w) =>
+  text.includes(w) ||
+  (!!foodSynonyms[w] && new RegExp(`\\b${foodSynonyms[w]}\\b`).test(text));
+// Every word typed must match the food. Ranking: name starts with the whole
+// phrase, then with the first word, then has every word; ties keep table order.
+function searchFoods(q, cat = "all") {
+  let text = norm(q).trim();
+  for (const [en, ms] of Object.entries(foodPhrases))
+    text = text.replace(new RegExp(`\\b${en}\\b`, "g"), ms);
+  const words = text.split(/\s+/).filter(Boolean);
+  const hits = [];
+  foods.forEach((f, i) => {
+    if (cat !== "all" && !f.c.includes(cat)) return;
+    if (words.every((w) => wordIn(foodIndex[i], w))) hits.push(i);
+  });
+  if (!words.length) return hits;
+  const phrase = words.join(" "),
+    first = words[0],
+    syn = foodSynonyms[first];
+  const rank = (i) => {
+    const name = norm(foods[i].n);
+    if (name.startsWith(phrase)) return 0;
+    const all = words.every((w) => wordIn(name, w));
+    if (name.startsWith(first) || (syn && name.startsWith(syn + " ")))
+      return all ? 1 : 2;
+    return all ? 3 : 4;
+  };
+  return hits.sort((a, b) => rank(a) - rank(b));
+}
+let libCat = "all",
+  libSort = "relevance",
+  libQuery = "";
 // Uses the device's own time zone, so family members abroad get their local "today".
 const today = () =>
   new Intl.DateTimeFormat("en-CA", {
@@ -464,7 +544,7 @@ function render() {
   }[page];
   $("#subtitle").textContent = {
     today: "Your food, movement and progress. All in one place.",
-    foods: "Familiar favourites. Clear portions. Better estimates.",
+    foods: `${foods.length} Malaysian foods and drinks with standard servings.`,
     progress: "Real observations, without filling in the blanks.",
     settings: "Personalise your targets and keep a copy of your records.",
   }[page];
@@ -495,28 +575,73 @@ function renderToday() {
   };
 }
 function renderFoods() {
+  const counts = { all: foods.length };
+  for (const f of foods) for (const c of f.c) counts[c] = (counts[c] || 0) + 1;
+  const chip = (id, label) =>
+    `<button type="button" class="chip ${libCat === id ? "selected" : ""}" data-cat="${id}">${esc(label)} <span>${counts[id] || 0}</span></button>`;
   $("#view").innerHTML =
-    `<div class="toolbar"><input class="search" id="search" placeholder="Search nasi, roti, kopi, milk…" aria-label="Search foods"><button onclick="customFood()">＋ Custom food</button></div><div class="note">MOH values use the stated serving from Malaysia’s Ministry of Health. Other foods are editable starter estimates, not laboratory values. Match the portion and check packaging for branded foods. <a href="${MOH}" target="_blank" rel="noopener">View MOH reference ↗</a></div><div id="foodResults" class="food-grid" style="margin-top:20px"></div>`;
-  $("#search").oninput = () => foodResults($("#search").value);
-  foodResults("");
+    `<div class="toolbar food-toolbar"><input class="search" id="search" type="search" placeholder="Search nasi lemak, teh tarik, chicken, kuih…" aria-label="Search foods" value="${esc(libQuery)}"><select id="foodSort" aria-label="Sort foods"><option value="relevance">Sort: best match</option><option value="name">Name A–Z</option><option value="low">Lowest kcal</option><option value="high">Highest kcal</option><option value="density">Lowest kcal per 100 g</option></select><button onclick="customFood()">＋ Custom food</button></div>` +
+    `<div class="chips" role="group" aria-label="Food categories">${chip("all", "All foods")}${FOOD_CATEGORIES.map(([id, ms, en]) => chip(id, ms === en ? ms : `${ms} · ${en}`)).join("")}</div>` +
+    `<div class="note food-note">Calories per serving from the <b>Bank Kalori Makanan</b> table. Values are averages: recipes, oil and portion sizes vary, so match the serving and adjust the number of servings. Foods marked <b>Estimate</b> are not in the table. <details><summary>Sources and serving guide</summary><p><b>Sources:</b> ${Object.entries(
+      FOOD_SOURCES,
+    )
+      .map(([k, v]) => `${k === "Est" ? "Estimate" : k} = ${esc(v)}`)
+      .join(
+        " · ",
+      )}</p><p><b>Servings:</b> senduk = serving spoon · mangkuk = bowl · pinggan = plate · cawan = cup · gelas = glass · sudu teh = teaspoon · sudu makan = tablespoon · keping = slice or piece · ketul = piece · biji = one whole item · potong = cut piece · ekor = whole fish or prawn · saiz kotak mancis = matchbox-sized piece.</p></details></div>` +
+    `<p class="tiny" id="foodCount" aria-live="polite"></p><div class="card table-card"><table class="food-table"><thead><tr><th>Food</th><th class="d-only">Serving</th><th class="num d-only">Weight</th><th class="num">kcal</th><th class="num d-only" title="Calories per 100 g, for comparing foods">kcal / 100 g</th><th class="d-only">Source</th><th><span class="sr-only">Add</span></th></tr></thead><tbody id="foodResults"></tbody></table></div>`;
+  $("#foodSort").value = libSort;
+  $("#search").oninput = () => {
+    libQuery = $("#search").value;
+    foodResults();
+  };
+  $("#foodSort").onchange = () => {
+    libSort = $("#foodSort").value;
+    foodResults();
+  };
+  $(".chips").onclick = (e) => {
+    const b = e.target.closest?.("[data-cat]");
+    if (!b) return;
+    libCat = b.dataset.cat;
+    for (const c of document.querySelectorAll(".chip"))
+      c.classList.toggle("selected", c.dataset.cat === libCat);
+    foodResults();
+  };
+  $("#foodResults").onclick = (e) => {
+    const b = e.target.closest?.("[data-food]");
+    if (b) entryForm(Number(b.dataset.food));
+  };
+  foodResults();
 }
-function foodResults(q) {
-  let list = foods
-    .map((f, i) => ({ f, i }))
-    .filter(({ f }) =>
-      f
-        .join(" ")
-        .toLowerCase()
-        .includes(q.toLowerCase().replace("kopi", "nescafé")),
-    );
+function sortedFoods(q, cat, sort) {
+  const list = searchFoods(q, cat);
+  const by = {
+    name: (a, b) => foods[a].n.localeCompare(foods[b].n),
+    low: (a, b) => foods[a].k - foods[b].k,
+    high: (a, b) => foods[b].k - foods[a].k,
+    density: (a, b) => (per100g(foods[a]) ?? 1e9) - (per100g(foods[b]) ?? 1e9),
+  }[sort];
+  return by ? list.sort(by) : list;
+}
+function foodResults() {
+  const list = sortedFoods(libQuery, libCat, libSort);
+  const src = (k) =>
+    `<abbr title="${esc(FOOD_SOURCES[k] || k)}" class="src src-${esc(k)}">${k === "Est" ? "Estimate" : esc(k)}</abbr>`;
+  $("#foodCount").textContent =
+    `${list.length} ${list.length === 1 ? "food" : "foods"}` +
+    (libCat !== "all" ? ` in ${foodCats[libCat].ms}` : "") +
+    (libQuery.trim() ? ` matching “${libQuery.trim()}”` : "");
   $("#foodResults").innerHTML = list.length
     ? list
-        .map(
-          ({ f, i }) =>
-            `<article class="card food-item"><span class="tag">${f[3] === "MOH" ? "MOH reference" : "Starter estimate"}</span><h3>${esc(f[0])}</h3><span class="tiny">${esc(f[1])}</span><div><b>${f[2]}</b> <span class="unit">kcal / serving</span></div><button class="secondary" onclick="entryForm(${i})">＋ Add to diary</button></article>`,
-        )
+        .map((i) => {
+          const f = foods[i],
+            d = per100g(f);
+          const cats =
+            libCat === "all" ? f.c.map((c) => foodCats[c].ms).join(", ") : "";
+          return `<tr><td><b>${esc(f.n)}</b><div class="tiny m-only">${esc(portionText(f))} · ${src(f.src)}</div>${cats || f.note ? `<div class="tiny">${esc([cats, f.note].filter(Boolean).join(" · "))}</div>` : ""}</td><td class="d-only">${esc(f.s)}</td><td class="num d-only">${f.g ? f.g + " g" : "—"}</td><td class="num"><b>${f.k}</b></td><td class="num d-only">${d ?? "—"}</td><td class="d-only">${src(f.src)}</td><td><button type="button" class="secondary small" data-food="${i}" aria-label="Add ${esc(f.n)} to diary">＋ Add</button></td></tr>`;
+        })
         .join("")
-    : "<p>No matching food. Add a custom food using its label.</p>";
+    : `<tr><td colspan="7"><p>No matching food. Try another word (English works too, e.g. “chicken rice”), or add a custom food from its label.</p></td></tr>`;
 }
 function show(html) {
   $("#modalBody").innerHTML = html;
@@ -524,17 +649,23 @@ function show(html) {
 }
 function foodDialog(meal = "Breakfast") {
   show(
-    `<h2>Log your food</h2><p class="tiny">For ${esc(date)} · Choose a food, then adjust your portion.</p><label>Search Malaysian foods<input id="foodSearch" placeholder="Try roti or nasi"></label><div id="pickList" style="max-height:320px;overflow:auto"></div><button class="secondary" onclick="customFood('${meal}')">Custom food / label</button>`,
+    `<h2>Log your food</h2><p class="tiny">For ${esc(date)} · Choose a food, then adjust your portion.</p><label>Search Malaysian foods<input id="foodSearch" placeholder="Try nasi lemak, teh tarik or chicken"></label><div id="pickList" style="max-height:320px;overflow:auto"></div><button class="secondary" onclick="customFood('${meal}')">Custom food / label</button>`,
   );
   const list = (q) => {
-    $("#pickList").innerHTML = foods
-      .map((f, i) => ({ f, i }))
-      .filter(({ f }) => f[0].toLowerCase().includes(q.toLowerCase()))
-      .map(
-        ({ f, i }) =>
-          `<div class="meal-top meal"><div>${esc(f[0])}<div class="tiny">${f[2]} kcal · ${esc(f[1])}</div></div><button class="text" onclick="entryForm(${i},'${meal}')">＋</button></div>`,
-      )
-      .join("");
+    const hits = searchFoods(q);
+    $("#pickList").innerHTML =
+      hits
+        .slice(0, 80)
+        .map((i) => {
+          const f = foods[i];
+          return `<div class="meal-top meal"><div>${esc(f.n)}<div class="tiny">${f.k} kcal · ${esc(portionText(f))}</div></div><button class="text" aria-label="Add ${esc(f.n)}" onclick="entryForm(${i},'${meal}')">＋</button></div>`;
+        })
+        .join("") +
+      (hits.length > 80
+        ? `<p class="tiny">Showing 80 of ${hits.length}. Type more to narrow the list.</p>`
+        : hits.length
+          ? ""
+          : '<p class="tiny">No match. Try another word or use Custom food.</p>');
   };
   $("#foodSearch").oninput = (e) => list(e.target.value);
   list("");
@@ -547,7 +678,8 @@ function editEntry(id) {
   entryForm(-1, e.meal, e);
 }
 function entryForm(index, meal = "Breakfast", entry = null) {
-  const f = index >= 0 ? foods[index] : ["", "1 serving", 0, "Custom"];
+  const food = index >= 0 ? foods[index] : null;
+  const f = food ? [food.n, portionText(food), food.k] : ["", "1 serving", 0];
   show(
     `<h2>${entry ? "Edit" : "Add"} food</h2><p class="tiny">${date} · Calories = kcal per serving × servings</p><form id="entryForm"><label>Food name<input id="ename" required maxlength="150" value="${esc(entry?.name ?? f[0])}"></label><label>Meal<select id="emeal">${meals.map((m) => `<option ${m === meal ? "selected" : ""}>${m}</option>`).join("")}</select></label><label>Serving description<input id="portion" required value="${esc(entry?.portion ?? f[1])}"></label><div class="row"><label>kcal per serving<input id="kcal" type="number" min="0" max="10000" step="0.1" required value="${entry?.kcal ?? f[2]}"></label><label>Servings (¼ = 0.25)<input id="qty" type="number" min="0.01" max="100" step="0.01" required value="${entry?.qty ?? 1}"></label></div><p id="calc" class="note"></p><button type="submit">Save to diary</button></form>`,
   );
