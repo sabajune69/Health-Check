@@ -61,6 +61,34 @@ function newCode() {
   crypto.getRandomValues(a);
   return [...a].map((n) => CODE_CHARS[n % CODE_CHARS.length]).join("");
 }
+// Where Google sign-in cannot work: app built-in browsers (Google blocks
+// sign-in there) and the iPhone home-screen app (the sign-in window often
+// cannot return to it).
+function signInBlocker() {
+  const ua = navigator.userAgent || "";
+  const app = (ua.match(
+    /FBAN|FBAV|FB_IAB|Instagram|Line\/|WhatsApp|MicroMessenger|TikTok|musical_ly|Snapchat|Twitter|LinkedInApp|Telegram/i,
+  ) || [])[0];
+  if (app || /; wv\)/.test(ua))
+    return {
+      kind: "inapp",
+      text: `This page is open inside ${
+        app
+          ? app
+              .replace(/FBAN|FBAV|FB_IAB/i, "Facebook")
+              .replace(/MicroMessenger/i, "WeChat")
+              .replace(/Line\//i, "LINE")
+              .replace(/musical_ly/i, "TikTok")
+          : "another app"
+      }’s built-in browser, where Google does not allow sign-in. Open it in ${/iPhone|iPad/.test(ua) ? "Safari" : "Chrome"} instead: tap ⋯ or ⋮ and choose “Open in browser”, or copy the link and paste it into ${/iPhone|iPad/.test(ua) ? "Safari" : "Chrome"}.`,
+    };
+  if (navigator.standalone === true)
+    return {
+      kind: "homescreen",
+      text: "Google sign-in often fails inside the home-screen app on iPhone. Open the site in Safari to sign in and use the family cloud there.",
+    };
+  return null;
+}
 const profileRef = (id) => fb.doc(db, "families", fam.id, "profiles", id);
 const dayRef = (id, d) =>
   fb.doc(db, "families", fam.id, "profiles", id, "days", d);
@@ -144,8 +172,21 @@ function renderBox(el) {
     return;
   }
   if (phase === "signedout" || (phase === "error" && !user)) {
-    el.innerHTML = `<section class="card cloud-box cloud-cta"><div><h2>Keep your family’s data safe</h2><p class="tiny">Sign in with Google to save profiles, pictures and diaries in your family’s private cloud and see them on every phone and computer. Without signing in, records stay only in this browser.</p>${err}</div><button type="button" id="cloudSignIn">Sign in with Google</button></section>`;
-    el.querySelector("#cloudSignIn").onclick = signIn;
+    const block = signInBlocker();
+    el.innerHTML = block
+      ? `<section class="card cloud-box cloud-cta"><div><h2>Open in your browser to sign in</h2><p class="tiny">${html(block.text)}</p>${err}</div><button type="button" id="cloudCopyLink">Copy link</button></section>`
+      : `<section class="card cloud-box cloud-cta"><div><h2>Keep your family’s data safe</h2><p class="tiny">Sign in with Google to save profiles, pictures and diaries in your family’s private cloud and see them on every phone and computer. Without signing in, records stay only in this browser.</p>${err}</div><button type="button" id="cloudSignIn">Sign in with Google</button></section>`;
+    if (block)
+      el.querySelector("#cloudCopyLink").onclick = async () => {
+        const url = location.origin + location.pathname;
+        try {
+          await navigator.clipboard.writeText(url);
+          toast("Link copied. Paste it into your browser.");
+        } catch {
+          prompt("Copy this link and open it in your browser:", url);
+        }
+      };
+    else el.querySelector("#cloudSignIn").onclick = signIn;
     return;
   }
   if (phase === "nofamily" || (phase === "error" && !fam)) {
@@ -181,6 +222,7 @@ function renderBox(el) {
 async function start() {
   const config = window.FIREBASE_CONFIG;
   if (!config || !config.apiKey) return; // cloud sync not set up: browser-only mode
+  if (window.CLOUD_SYNC_ON === false) return; // on hold (KIV): browser-only mode
   meta = loadMeta();
   setPhase("loading");
   try {
@@ -232,10 +274,32 @@ async function start() {
 
 function friendly(e) {
   const c = e?.code || "";
+  const tag = c ? ` (error: ${c})` : "";
   if (c.includes("popup-closed") || c.includes("cancelled-popup"))
-    return "Sign-in was cancelled.";
+    return (
+      "The Google window was closed before sign-in finished. Press Sign in with Google again and choose your account." +
+      tag
+    );
   if (c.includes("popup-blocked"))
-    return "The sign-in window was blocked. Allow pop-ups for this site and try again.";
+    return (
+      `The browser blocked the Google sign-in window. Allow pop-ups for ${location.host} (in the address bar or browser settings) and try again.` +
+      tag
+    );
+  if (
+    c.includes("operation-not-supported") ||
+    c.includes("web-storage-unsupported")
+  )
+    return (
+      "This browser can’t complete Google sign-in (private mode or blocked cookies). Open the site in normal Chrome or Safari and try again." +
+      tag
+    );
+  if (c.includes("internal-error") || c.includes("network-request-failed"))
+    return (
+      "Google sign-in could not connect. Check the internet connection and try again; if it keeps failing, open the site in Chrome or Safari." +
+      tag
+    );
+  if (c.includes("account-exists") || c.includes("user-disabled"))
+    return "Google refused this account for sign-in." + tag;
   if (c.includes("unauthorized-domain"))
     return "This website address is not yet allowed for sign-in in Firebase (Authentication → Settings → Authorized domains).";
   if (c.includes("permission-denied"))
@@ -249,12 +313,26 @@ function friendly(e) {
 }
 
 // ---------- sign in / out ----------
+let signingIn = false;
 async function signIn() {
+  if (signingIn) return;
+  signingIn = true;
+  const btn = document.getElementById("cloudSignIn");
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Opening Google…";
+  }
   try {
     lastError = "";
-    await fb.signInWithPopup(auth, new fb.GoogleAuthProvider());
+    const provider = new fb.GoogleAuthProvider();
+    provider.setCustomParameters?.({ prompt: "select_account" });
+    await fb.signInWithPopup(auth, provider);
   } catch (e) {
+    console.warn("Sign-in failed:", e?.code, e?.message);
     setPhase(user ? phase : "signedout", friendly(e));
+  } finally {
+    signingIn = false;
+    refreshBox();
   }
 }
 async function signOutFlow() {

@@ -2,6 +2,12 @@
 // settings → Your apps → My Health web). These identify the project; they
 // are not secrets. Access is protected by Google sign-in and firestore.rules.
 // Set to null to run in browser-only mode.
+
+// ON HOLD (KIV): family cloud sign-in is switched off while Google sign-in
+// problems on family phones are reviewed. Change to true to switch it back on;
+// the Firebase project, family group and rules are kept as they are.
+window.CLOUD_SYNC_ON = false;
+
 window.FIREBASE_CONFIG = {
   apiKey: "AIzaSyBA7nRXz3iVzscw5WOHUSliVd-j327FgLU",
   authDomain: "my-health-family.firebaseapp.com",
