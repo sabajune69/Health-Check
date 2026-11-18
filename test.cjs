@@ -17,6 +17,7 @@ const c = {
   localStorage: {
     getItem: (k) => stored[k] || null,
     setItem: (k, v) => (stored[k] = v),
+    removeItem: (k) => delete stored[k],
   },
   document: {
     querySelector: (s) =>
@@ -26,6 +27,9 @@ const c = {
         style: {},
         value: "",
         appendChild() {},
+        showModal() {
+          this.open = true;
+        },
         close() {
           this.open = false;
         },
@@ -37,6 +41,7 @@ const c = {
   setTimeout() {},
   alert() {},
   confirm: () => true,
+  prompt: () => c.promptAnswer,
 };
 vm.createContext(c);
 vm.runInContext(fs.readFileSync("app.js", "utf8"), c);
@@ -58,6 +63,41 @@ const fdates=[];const end=new Date(today()+'T12:00:00Z');for(let i=0;i<7;i++){co
   c,
 );
 assert(!fs.readFileSync("app.js", "utf8").includes("/api/me"));
+
+// Regression tests for the audit fixes (Nov 2026)
+vm.runInContext(
+  `
+openUser('saba');
+activity();
+if (!$('#modalBody').innerHTML.includes('<option value="yes"')) throw Error('Vegetables Yes option missing');
+
+const gain = {height:165,baseline:60,goal:70,calories:1800,steps:5000,walking:20};
+if (reachedGoal(61, gain) || !reachedGoal(70, gain) || goalText(61, gain) !== '9.0 kg to gain') throw Error('Weight-gain goal');
+const lose = {height:165,baseline:80,goal:70,calories:1800,steps:5000,walking:20};
+if (reachedGoal(71, lose) || !reachedGoal(69, lose) || goalText(75, lose) !== '5.0 kg to lose') throw Error('Weight-loss goal');
+const keep = {height:165,baseline:60,goal:60,calories:1800,steps:5000,walking:20};
+if (!reachedGoal(60.8, keep) || reachedGoal(62, keep)) throw Error('Maintain goal');
+
+const extra = normalizeBackup({version:1,profile:{...gain,extra:1},days:{}});
+if (!extra || 'extra' in extra.profile) throw Error('Unknown profile keys not stripped');
+const old = normalizeBackup({profile:{height:'165',goal:70},days:{'2026-01-02':{steps:'1200',reports:{Lunch:'nasi lemak'}}}});
+if (!old || old.profile.height !== 165 || old.profile.calories !== null || old.days['2026-01-02'].steps !== 1200 || old.days['2026-01-02'].entries.length !== 0) throw Error('Older backup not normalised');
+if (normalizeBackup({version:2,profile:gain,days:{}}) || normalizeBackup({version:1,profile:{...gain,height:5},days:{}}) || normalizeBackup({days:{'bad':{}}})) throw Error('Invalid backup accepted');
+
+state.profile = {...gain, extra: 1}; page = 'settings'; render();
+for (const [k] of profileFields) $('#p_' + k).value = String(gain[k]);
+$('#profileForm').onsubmit({preventDefault(){}});
+if (state.profile.goal !== 70) throw Error('Save goals after import');
+
+promptAnswer = 'WRONG'; deleteProfile();
+if (!getUsers().some(u => u.id === 'saba')) throw Error('Deleted on wrong confirmation');
+openUser('saba'); promptAnswer = 'SABA'; deleteProfile();
+if (getUsers().some(u => u.id === 'saba') || localStorage.getItem(dataKey('saba')) !== null) throw Error('Delete profile');
+if (!getUsers().some(u => u.id === 'sarah')) throw Error('Delete removed another profile');
+if ($('#familyOverview').innerHTML.includes('onclick="openUser')) throw Error('Inline user-ID handler');
+`,
+  c,
+);
 console.log(
-  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions and backups",
+  "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving and profile deletion",
 );
