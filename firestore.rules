@@ -1,0 +1,80 @@
+rules_version = '2';
+
+// Security rules for the My Health family cloud.
+// Paste into Firebase console → Firestore Database → Rules → Publish.
+//
+// - Nobody can read or write anything without signing in.
+// - Family data can be read and written only by that family's members.
+// - Someone joins a family only by presenting a valid family code, and can
+//   add only themselves.
+// - Each login can only see and set its own pointer to its family.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+    function familyDoc(fid) {
+      return get(/databases/$(database)/documents/families/$(fid));
+    }
+    function isMember(fid) {
+      return signedIn() && request.auth.uid in familyDoc(fid).data.members;
+    }
+
+    // Which family a login belongs to: only that login can see or set it.
+    match /users/{uid} {
+      allow read, delete: if signedIn() && request.auth.uid == uid;
+      allow create, update: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['familyId']);
+    }
+
+    // Family codes. Anyone signed in may look up one code they were given,
+    // but nobody can list codes.
+    match /invites/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['familyId', 'createdBy', 'createdAt'])
+        && request.resource.data.createdBy == request.auth.uid
+        && request.auth.uid in getAfter(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.members;
+      allow delete: if isMember(resource.data.familyId);
+      allow update: if false;
+    }
+
+    match /families/{fid} {
+      allow read: if signedIn() && request.auth.uid in resource.data.members;
+
+      // Create a family with yourself as owner and only member.
+      allow create: if signedIn()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.members.keys().hasOnly([request.auth.uid]);
+
+      allow update: if signedIn() && (
+        // Members: may update the family, but not change the owner. Only the
+        // owner may remove members.
+        (request.auth.uid in resource.data.members
+          && request.resource.data.owner == resource.data.owner
+          && (request.auth.uid == resource.data.owner
+              || request.resource.data.members.keys().hasAll(resource.data.members.keys())))
+        ||
+        // Joining: a non-member adds only themselves, with a valid code.
+        (!(request.auth.uid in resource.data.members)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'lastJoin'])
+          && request.resource.data.members.diff(resource.data.members).affectedKeys().hasOnly([request.auth.uid])
+          && get(/databases/$(database)/documents/invites/$(request.resource.data.lastJoin)).data.familyId == fid)
+      );
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.owner;
+
+      // Everything inside a family: profiles, diary days, header photo.
+      match /{document=**} {
+        allow read, write: if isMember(fid);
+      }
+    }
+
+    // Anything else is closed.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

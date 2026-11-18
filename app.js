@@ -197,6 +197,15 @@ function goalText(weight, p) {
       ? `${gap} kg from goal`
       : `${gap} kg to lose`;
 }
+// Cloud sync (cloud.js) sets window.Cloud once the family signs in. These
+// helpers tell it what changed; without sign-in they do nothing.
+const cloudCall = (fn, ...args) => {
+  try {
+    window.Cloud?.[fn]?.(...args);
+  } catch (e) {
+    console.warn("Cloud sync:", e);
+  }
+};
 const usersKey = "my-health-family-users-v1";
 const dataKey = (id) => "my-health-family-data-" + id;
 const headerKey = "my-health-family-header-v1";
@@ -382,14 +391,16 @@ function chooseUser() {
   try {
     const users = getUsers();
     $("#view").innerHTML =
-      `<div class="family-dashboard"><section class="family-banner"><div><span class="eyebrow">MY HEALTH · FAMILY EDITION</span><h2>Every step counts.<br>Celebrate them together.</h2><p>See your family’s real progress, one check-in at a time.</p></div><div class="banner-actions"><button type="button" id="changeHeader" aria-label="Change header photo">🖼 Change photo</button><button type="button" id="resetHeader" hidden>Reset</button><input type="file" id="headerFile" accept="image/*" hidden></div></section><section id="familyTotals"></section><section class="card family-overview" id="familyOverview"></section><div class="settings"><section class="card"><h2>Choose your profile</h2><p class="tiny">Profiles are saved on this browser. They are not password-protected: anyone using this browser can open them. The same ID on another device does not sync records.</p><div id="userList"></div>${users.length ? "" : "<p>No profiles yet. Create yours below.</p>"}</section><section class="card" style="margin-top:20px"><h2>Create a new user</h2><form id="newUser"><label>Your name<input id="newName" required maxlength="60" autocomplete="name"></label><label>User ID<input id="newId" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_\\-]{3,30}" placeholder="e.g. saba or sarah_01" autocomplete="off"></label><p class="tiny">3–30 letters, numbers, underscores or hyphens. IDs are unique on this browser and ignore capital letters.</p><button>Create user</button></form></section></div></div>`;
+      `<div class="family-dashboard"><div id="cloudBox"></div><section class="family-banner"><div><span class="eyebrow">MY HEALTH · FAMILY EDITION</span><h2>Every step counts.<br>Celebrate them together.</h2><p>See your family’s real progress, one check-in at a time.</p></div><div class="banner-actions"><button type="button" id="changeHeader" aria-label="Change header photo">🖼 Change photo</button><button type="button" id="resetHeader" hidden>Reset</button><input type="file" id="headerFile" accept="image/*" hidden></div></section><section id="familyTotals"></section><section class="card family-overview" id="familyOverview"></section><div class="settings"><section class="card"><h2>Choose your profile</h2><p class="tiny">${window.Cloud?.inFamily?.() ? "Your family’s profiles, synced to every signed-in device." : "Profiles are saved on this browser and are not password-protected. Sign in above to keep them safe and use them on other devices."}</p><div id="userList"></div>${users.length ? "" : "<p>No profiles yet. Create yours below.</p>"}</section><section class="card" style="margin-top:20px"><h2>Create a new user</h2><form id="newUser"><label>Your name<input id="newName" required maxlength="60" autocomplete="name"></label><label>User ID<input id="newId" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_\\-]{3,30}" placeholder="e.g. saba or sarah_01" autocomplete="off"></label><p class="tiny">3–30 letters, numbers, underscores or hyphens. IDs are unique on this browser and ignore capital letters.</p><button>Create user</button></form></section></div></div>`;
     familyOverview(users);
     applyHeader();
+    cloudCall("renderBox", $("#cloudBox"));
     $("#changeHeader").onclick = () => $("#headerFile").click();
     $("#headerFile").onchange = changeHeader;
     $("#resetHeader").onclick = () => {
       try {
         localStorage.removeItem(headerKey);
+        cloudCall("headerChanged");
       } catch {}
       applyHeader();
       toast("Header photo reset");
@@ -418,6 +429,7 @@ function chooseUser() {
           usersKey,
           JSON.stringify([...latest, { id, name }]),
         );
+        cloudCall("profileChanged", id);
         openUser(id);
       } catch {
         alert(
@@ -468,6 +480,7 @@ function changeHeader(e) {
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
     try {
       localStorage.setItem(headerKey, c.toDataURL("image/jpeg", 0.82));
+      cloudCall("headerChanged");
     } catch {
       alert(
         "This photo is too large to store in the browser. Try a smaller photo.",
@@ -535,9 +548,32 @@ function toast(s) {
   setTimeout(() => ($("#toast").style.display = "none"), 2600);
 }
 function updateDay(values) {
-  state.days[date] = { ...day(), ...values };
+  state.days[date] = { ...day(), ...values, at: Date.now() };
   save();
+  cloudCall("dayChanged", identity.id, date);
   render();
+}
+// Called by cloud.js after it writes changes from other devices to storage.
+function onCloudData(ids = []) {
+  const editing =
+    $("#modal").open ||
+    ["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName);
+  if (state && identity) {
+    if (!getUsers().some((u) => u.id === identity.id)) {
+      chooseUser();
+      toast("This profile was deleted on another device");
+      return;
+    }
+    if (ids.includes(identity.id)) {
+      try {
+        const saved = JSON.parse(localStorage.getItem(key));
+        state = normalizeBackup(saved) || saved;
+        identity = getUsers().find((u) => u.id === identity.id) || identity;
+        showAccount(identity);
+      } catch {}
+    }
+    if (!editing && (page === "today" || page === "progress")) render();
+  } else if ($("#newUser") && !editing) chooseUser();
 }
 function navigate(p) {
   // Before a profile is open, the food library can still be browsed; the
@@ -829,18 +865,19 @@ function renderProgress() {
 function renderSettings() {
   const p = state.profile;
   $("#view").innerHTML =
-    `<div class="settings"><section class="card" style="margin-bottom:20px"><h2>Edit profile</h2><div class="profile-photo">${avatarHTML(identity, "avatar-lg")}<div><button type="button" class="secondary" id="changePhoto">📷 Change picture</button> ${getPhoto(identity.id) ? '<button type="button" class="text" id="removePhoto">Remove picture</button>' : ""}<input type="file" id="photoFile" accept="image/*" hidden><p class="tiny">Square pictures look best. Photos are cropped to the centre and saved on this browser only.</p></div></div><form id="nameForm"><label>Display name<input id="displayName" required maxlength="60" autocomplete="name" value="${esc(identity.name)}"></label><button type="submit">Save name</button></form><label>User ID (cannot be changed)<input readonly value="@${esc(identity.id)}"></label><p class="tiny">This is a local user ID, not a secure login. Profiles have separate meals, activity, weight and goals. Anyone with access to this browser can switch profiles. Records do not sync between devices.</p><button type="button" class="secondary" onclick="chooseUser()">Switch user →</button></section><section class="card"><h2>Your personal targets</h2><p class="tiny">Enter your own height, starting weight and targets. New accounts start with an empty diary. Targets are editable and are not a personalised prescription.</p><form id="profileForm"><div class="row">${profileFields
+    `<div class="settings"><section class="card" style="margin-bottom:20px"><h2>Edit profile</h2><div class="profile-photo">${avatarHTML(identity, "avatar-lg")}<div><button type="button" class="secondary" id="changePhoto">📷 Change picture</button> ${getPhoto(identity.id) ? '<button type="button" class="text" id="removePhoto">Remove picture</button>' : ""}<input type="file" id="photoFile" accept="image/*" hidden><p class="tiny">Square pictures look best. Photos are cropped to the centre.</p></div></div><form id="nameForm"><label>Display name<input id="displayName" required maxlength="60" autocomplete="name" value="${esc(identity.name)}"></label><button type="submit">Save name</button></form><label>User ID (cannot be changed)<input readonly value="@${esc(identity.id)}"></label><p class="tiny">Profiles have separate meals, activity, weight and goals. ${window.Cloud?.inFamily?.() ? "Everyone in your family group can open family profiles on their own signed-in devices." : "Anyone with access to this browser can switch profiles. Sign in on the family page to sync between devices."}</p><button type="button" class="secondary" onclick="chooseUser()">Switch user →</button></section><section class="card"><h2>Your personal targets</h2><p class="tiny">Enter your own height, starting weight and targets. New accounts start with an empty diary. Targets are editable and are not a personalised prescription.</p><form id="profileForm"><div class="row">${profileFields
       .map(
         ([id, l, min, max, step]) =>
           `<label>${l}<input required id="p_${id}" type="number" min="${min}" max="${max}" step="${step}" value="${p[id] ?? ""}"></label>`,
       )
       .join(
         "",
-      )}</div><button type="submit">Save goals</button></form></section><section class="card" style="margin-top:20px"><h2>Your data stays with you</h2><p class="tiny">This version saves in this browser only. Clearing browser data removes these records. Export a backup and restore it on another device. Import replaces only the selected user’s records. Other profiles are unaffected.</p><div class="actions"><button class="secondary" onclick="exportData()">↓ Export backup</button><button class="secondary" onclick="document.getElementById('import').click()">↑ Restore backup</button></div><input id="import" type="file" accept="application/json" hidden><p class="tiny">On iPhone, open in Safari and use Share → Add to Home Screen for an app-like shortcut. Apple Health readings must be entered manually.</p></section><section class="card danger-zone" style="margin-top:20px"><h2>Delete this profile</h2><p class="tiny">Permanently removes @${esc(identity.id)} and all of its records from this browser. Export a backup first if you may need them again. Other profiles are not affected.</p><button type="button" class="danger" id="deleteProfile">Delete profile…</button></section></div>`;
+      )}</div><button type="submit">Save goals</button></form></section><section class="card" style="margin-top:20px"><h2>Your data</h2><p class="tiny">${window.Cloud?.inFamily?.() ? "Synced to your family’s private cloud and kept on this device for offline use. A backup file is still a good extra copy." : "Saved in this browser only, so clearing browser data removes it. Sign in on the family page to keep it safe in the cloud, or export a backup."} Restoring a backup replaces only this profile’s records.</p><div class="actions"><button class="secondary" onclick="exportData()">↓ Export backup</button><button class="secondary" onclick="document.getElementById('import').click()">↑ Restore backup</button></div><input id="import" type="file" accept="application/json" hidden><p class="tiny">On iPhone, open in Safari and use Share → Add to Home Screen for an app-like shortcut. Apple Health readings must be entered manually.</p></section><section class="card danger-zone" style="margin-top:20px"><h2>Delete this profile</h2><p class="tiny">Permanently removes @${esc(identity.id)} and all of its records from this browser. Export a backup first if you may need them again. Other profiles are not affected.</p><button type="button" class="danger" id="deleteProfile">Delete profile…</button></section></div>`;
   $("#profileForm").onsubmit = (e) => {
     e.preventDefault();
     for (const [k] of profileFields) p[k] = Number($("#p_" + k).value);
     save();
+    cloudCall("profileChanged", identity.id);
     render();
     toast("Goals saved");
   };
@@ -877,6 +914,7 @@ function renameUser(value) {
     return false;
   }
   identity = { ...identity, name };
+  cloudCall("profileChanged", identity.id);
   showAccount(identity);
   render();
   return true;
@@ -892,6 +930,7 @@ function setPhoto(id, dataUrl) {
     );
     return false;
   }
+  cloudCall("profileChanged", id);
   if (identity?.id === id) {
     showAccount(identity);
     render();
@@ -951,6 +990,7 @@ function deleteProfile() {
     );
     localStorage.removeItem(dataKey(identity.id));
     localStorage.removeItem(photoKey(identity.id));
+    cloudCall("profileDeleted", identity.id);
   } catch {
     alert("Unable to delete this profile. No records were changed.");
     return;
@@ -1031,6 +1071,7 @@ function normalizeBackup(x) {
     if (v.reports && typeof v.reports === "object" && !Array.isArray(v.reports))
       for (const m of meals)
         if (v.reports[m] != null) day.reports[m] = String(v.reports[m]);
+    if (v.at != null && Number.isFinite(Number(v.at))) day.at = Number(v.at);
     for (const k of ["weight", "steps", "walking", "coffee"]) {
       const n = num(v[k]);
       if (n !== null && !(Number.isFinite(n) && n >= 0)) return null;
@@ -1069,8 +1110,12 @@ async function importData(e) {
       )
     )
       return;
+    const now = Date.now();
+    for (const d of Object.values(clean.days)) d.at = now;
     state = clean;
     save();
+    cloudCall("profileChanged", identity.id);
+    cloudCall("allDaysChanged", identity.id);
     if (validImage(x.photo)) setPhoto(identity.id, x.photo);
     render();
     toast("Backup restored");

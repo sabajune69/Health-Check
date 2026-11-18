@@ -79,12 +79,24 @@ There are two ways, depending on who should see the new photo:
 
 ---
 
-## Your data and privacy
+## Family cloud: sign in, sync and keep data safe
 
-- **Stored only in this browser.** Nothing is uploaded anywhere. Different phones, different browsers, and even a different website address each have separate storage — records do **not** sync, even with the same user ID.
-- **Profiles are not passwords.** Anyone using the same browser can open any profile. Don't use a shared device if that's a concern.
-- **Clearing browser data erases records.** Export a backup regularly from **My goals → Export backup**.
-- No names, health history, email addresses or passwords come bundled with the app. Every new profile starts empty.
+Without signing in, records are saved only in the browser where they were entered. Each browser and phone keeps its own copy, and clearing browser data erases it.
+
+**Sign in with Google** (family page) to save everything in your family’s private cloud (Google Firebase):
+
+1. **First person:** press **Sign in with Google** → **Create family group**. Any profiles already on that browser are offered for upload.
+2. **Everyone else:** press **Sign in with Google**, type the **family code** shown on the first person’s family page (e.g. `ABCD-2345`) and press **Join family**.
+3. Profiles, pictures, diaries and the header photo now appear on every signed-in phone and computer, and changes show up on the others within a second or two.
+
+- **Who can see the data:** only signed-in members of your family group. The database rules (`firestore.rules`) block everyone else, including people who know the website address. Children don’t need their own login; their profiles live in the family group.
+- **Offline:** the app keeps working without signal. Changes wait on the device (“Offline · will sync”) and upload when it reconnects.
+- **Two edits to the same day:** the most recent edit wins.
+- **Sign out** on a shared or borrowed device and choose to remove the family’s records from that browser. They stay safe in the cloud.
+- **New family code:** the family owner can make a new code if the old one was shared too widely.
+- The status at the bottom of the sidebar shows **Synced to family cloud**, **Saving to cloud…**, **Offline · will sync** or **Browser storage only**.
+
+The cloud runs on Firebase’s free Spark plan (no payment card). The free plan has no automatic backups, so an occasional **Export backup** is still a good extra copy.
 
 ### Moving to another phone or a new site address
 1. On the old device: **My goals → Export backup** (downloads a `.json` file).
@@ -105,7 +117,7 @@ A restore replaces only the profile you're signed into; other profiles are untou
 
 ## Publishing with GitHub Pages
 
-1. Make sure these files are in the repository root: `index.html`, `foods.js`, `app.js`, `style.css`, `family-header.jpg`, `.nojekyll`.
+1. Make sure these files are in the repository root: `index.html`, `foods.js`, `app.js`, `cloud.js`, `firebase-config.js`, `vendor/`, `style.css`, `family-header.jpg`, `.nojekyll`.
 2. In the repository, go to **Settings → Pages**, choose **Deploy from a branch**, branch `main`, folder `/ (root)`.
 3. Share the Pages URL with the family. No build step is needed.
 
@@ -118,6 +130,10 @@ A restore replaces only the profile you're signed into; other profiles are untou
 | `index.html` | Page shell: sidebar, header, dialog and footer. |
 | `foods.js` | Food library data (generated from the calorie table). |
 | `tools/build_foods.py` | Rebuilds `foods.js` from the PDF. |
+| `cloud.js` | Family cloud: Google sign-in and two-way sync with Firestore. |
+| `firebase-config.js` | Firebase project settings (public identifiers, not secrets). Set to `null` for browser-only mode. |
+| `firestore.rules` | Database security rules; paste into Firebase console → Firestore → Rules → Publish after changing. |
+| `vendor/firebase-13.4.0.js` | Firebase SDK bundled locally (app, auth, firestore). |
 | `app.js` | All app logic: profiles, diary, family overview, charts, goals, backups and header photo. Plain JavaScript, no libraries. |
 | `style.css` | Layout and styling, including mobile layout under 700 px. |
 | `family-header.jpg` | Default header photo. |
@@ -129,11 +145,10 @@ Run the tests:
 node test.cjs
 ```
 
-**Releasing a change:** in `index.html`, raise the `?v=` number on `style.css`, `foods.js` and `app.js` (keep all three the same; `node test.cjs` checks this). Browsers then load the new files together instead of mixing new and cached copies.
+**Releasing a change:** in `index.html`, raise the `?v=` number on `style.css`, `foods.js`, `app.js`, `firebase-config.js` and `cloud.js` (keep them all the same; `node test.cjs` checks this). Browsers then load the new files together instead of mixing new and cached copies.
 
 Browser storage keys: `my-health-family-users-v1` (profile list), `my-health-family-data-<id>` (one per profile), `my-health-family-photo-<id>` (profile picture) and `my-health-family-header-v1` (custom header photo).
 
 ### Not included
 - No automatic sync with Apple Health, Google Fit or Notion.
-- No cloud backup or sharing between devices.
 - Calorie values are estimates, not laboratory measurements.
