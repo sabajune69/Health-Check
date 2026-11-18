@@ -181,6 +181,17 @@ if (state !== null || !/Choose a profile/.test($('#toast').textContent)) throw E
 `,
   c,
 );
+// Release stamp: style.css, foods.js and app.js must share one ?v= value
+{
+  const html = fs.readFileSync("index.html", "utf8");
+  const v = [
+    ...html.matchAll(/(?:style\.css|foods\.js|app\.js)\?v=([\w.-]+)/g),
+  ].map((m) => m[1]);
+  if (v.length !== 3 || new Set(v).size !== 1)
+    throw Error(
+      "index.html: style.css, foods.js and app.js need the same ?v= version",
+    );
+}
 console.log(
   "PASS: user creation, duplicate IDs, isolation, persistence, switching, blank activity, BMI, portions, backups, vegetables, gain/lose/maintain goals, old backups, goal saving, profile deletion, rename, profile pictures, the food library, tea break and sidebar without a profile",
 );
